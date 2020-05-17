@@ -23,14 +23,14 @@ import { User, TYPE_USER_ROOT } from '@/models/user';
 
 const node = new Node();
 const genesis = createGenesisiForFastTest();
-const user = User.create({type: TYPE_USER_ROOT});
-import { Transaction } from './models/transaction';
+const user = User.create(TYPE_USER_ROOT);
+import { Txn } from './models/transaction';
 
 user.setKey(genesis.rootKey.publicKey);
 console.log(
     node, genesis,
     user, User.fromBuffer(user.toBuffer()),
-    genesis.txn.dbHashList, Transaction.fromBuffer(genesis.txn.dbHashList.toBuffer())
+    genesis.txn.dbHashList, Txn.fromBuffer(genesis.txn.dbHashList.toBuffer())
 );
 node.takeBlock(genesis.blockGenesis);
 

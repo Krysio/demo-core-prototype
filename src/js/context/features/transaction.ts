@@ -1,5 +1,5 @@
 import { Context } from "@/context";
-import { Transaction } from "@/models/transaction";
+import { Txn, TxnAny } from "@/models/transaction";
 import { Block } from "@/models/block";
 
 /******************************/
@@ -8,7 +8,7 @@ export default function (refContext: unknown) {
     const context = refContext as Context;
 
     return {
-        waitedTransactions: {} as {[key: string]: Transaction[]},
+        waitedTransactions: {} as {[key: string]: TxnAny[]},
         async insertWaitingTransactionsToBlock(
             block: Block
         ) {
@@ -28,8 +28,7 @@ export default function (refContext: unknown) {
 
                         if (ref) {
                             for (let txn of ref) {
-                                txn.setBlockHash(null);
-                                block.insertTransaction(txn.toBuffer());
+                                block.insertTransaction(txn.toBuffer(true));
                             }
 
                             delete context.waitedTransactions[ keyString ];

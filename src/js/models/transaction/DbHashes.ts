@@ -10,12 +10,16 @@ import { Hash } from "@/models/hash";
 // [TYPE_CZEGO_DOTYCZY, TYPE_CZYM_WYKONANY, Buffer][]
 
 const EMPTY = {};
-export const TYPE_TXN_DB_HASHES = 3;
-Base.defineType(TYPE_TXN_DB_HASHES, class TxnDbHashes extends Base {
+export const TYPE_TXN_DB_HASH_LIST = 3;
+export class TxnDbHashList extends Base {
+    protected type = TYPE_TXN_DB_HASH_LIST;
+
+    //#region logical
+
     verify(inputs: {
         block?: Block
     } = EMPTY) {
-        const data = this.getData();
+        const data = this.getData('buffer');
 
         if (data === null) {
             return false;
@@ -37,6 +41,9 @@ Base.defineType(TYPE_TXN_DB_HASHES, class TxnDbHashes extends Base {
     }
 
     read() {}
+
+    //#endregion
+    //#region set-get
 
     getData(): [number, Hash][];
     getData(format: 'buffer'): BufferWrapper;
@@ -78,19 +85,27 @@ Base.defineType(TYPE_TXN_DB_HASHES, class TxnDbHashes extends Base {
         return this;
     }
 
-    getDataBuffer() {
-        const data = this.getData('buffer');
-        const dataSize = BufferWrapper.numberToUleb128Buffer(data.length);
-        return BufferWrapper.concat([dataSize, data]);
+    //#endregion
+    //#region import-export buffer
+
+    getBufferStructure() {
+        const buffData = this.getData('buffer');
+
+        return [
+            this.getType('buffer'),
+            BufferWrapper.numberToUleb128Buffer(buffData.length),
+            buffData
+        ];
     }
 
     setDataFromBufferWrapper(
         bufferWrapper: BufferWrapper
     ) {
-        this.setData(
-            bufferWrapper.read(
-                bufferWrapper.readUleb128()
-            )
-        );
+        this.setData(bufferWrapper.read(bufferWrapper.readUleb128()));
     }
-});
+
+    //#endregion
+}
+export default {
+    [TYPE_TXN_DB_HASH_LIST]: TxnDbHashList
+}

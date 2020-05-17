@@ -15,10 +15,13 @@ type UserState =
 /******************************/
 
 export const TYPE_USER_USER = 2;
-Base.defineType(TYPE_USER_USER, class UserUser extends Base {
+export class UserUser extends Base {
+    protected type = TYPE_USER_USER;
     protected state = STATE_USER_INACTIVE;
     protected timeStart = 0;
     protected timeEnd = 0;
+
+    //#region set-get
 
     getState(): UserState;
     getState(format: 'buffer'): BufferWrapper;
@@ -31,4 +34,35 @@ Base.defineType(TYPE_USER_USER, class UserUser extends Base {
     setState(value: UserState) {
         this.state = value;
     }
-});
+
+    //#endregion
+    //#region logical
+
+    verify() {
+        const key = this.getKey();
+        return key.verify();
+    }
+
+    //#endregion
+    //#region import-export buffer
+
+    getBufferStructure() {
+        const buffKey = this.getKey('buffer');
+        return [
+            this.getType('buffer'),
+            BufferWrapper.numberToUleb128Buffer(buffKey.length),
+            buffKey
+        ];
+    }
+
+    setDataFromBufferWrapper(
+        buff: BufferWrapper
+    ) {
+        this.setKey(buff.read(buff.readUleb128()));
+    }
+
+    //#endregion
+}
+export default {
+    [TYPE_USER_USER]: UserUser
+};

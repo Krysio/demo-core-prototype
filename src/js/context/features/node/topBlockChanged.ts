@@ -1,6 +1,6 @@
 import { Context } from "@/context";
 import { Block } from "@/models/block";
-import { Transaction } from "@/models/transaction";
+import { Txn } from "@/models/transaction";
 
 /******************************/
 
@@ -10,7 +10,7 @@ export default function (rawContext: unknown) {
     context.events.on('node/topBlock/changed', (block: Block) => {
         // czytanie bloku
         for (let txnBuffer of block.getBody()) {
-            const txn = Transaction.fromBuffer(txnBuffer);
+            const txn = Txn.fromBuffer(txnBuffer);
             // czytanie każdej transakcji
             txn.read({ context });
         }

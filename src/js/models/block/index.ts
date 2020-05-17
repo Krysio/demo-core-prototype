@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { HashSum } from "@/services/crypto/sha256";
 import BufferWrapper from "@/libs/BufferWrapper";
-import { Transaction } from "../transaction";
+import { Txn, TxnAny } from "../transaction";
 
 /******************************/
 
@@ -125,7 +125,7 @@ export class Block {
     getTransactionListByType(
         type: number
     ) {
-        const result = [] as Transaction[];
+        const result = [] as TxnAny[];
         const typeUleb = BufferWrapper.numberToUleb128Buffer(type);
 
         for (let txnBuffer of this.getBody()) {
@@ -139,7 +139,7 @@ export class Block {
             }
 
             if (flag) {
-                result.push(Transaction.fromBuffer(txnBuffer));
+                result.push(Txn.fromBuffer(txnBuffer));
             }
         }
 
@@ -152,7 +152,7 @@ export class Block {
         const txnDataList = this.getBody();
 
         for (let data of txnDataList) {
-            const txt = Transaction.fromBuffer(data);
+            const txt = Txn.fromBuffer(data);
 
             if (txt.verify({ block: this }) === false) {
                 return false;

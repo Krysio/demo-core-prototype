@@ -2,7 +2,7 @@ import * as React from 'react';
 import $, { JsonNode } from 'react-json-syntax';
 import BufferWrapper from '@/libs/BufferWrapper';
 import { Block } from '@/models/block';
-import { Transaction } from '@/models/transaction';
+import { Txn } from '@/models/transaction';
 import rTxn from "@/view/Txn";
 
 /******************************/
@@ -26,8 +26,10 @@ export default class rBlock extends React.Component<{block: Block}> {
                     BufferWrapper.numberToUleb128Buffer(block.getBody().length).toString('hex')
                 ]],
                 ...block.getBody().map((txnData) => {
-                    const txn = Transaction.fromBuffer(txnData);
-                    return [rTxn, { txn }];
+                    const txn = Txn.fromBuffer(txnData);
+                    const size = txnData.length;
+
+                    return [rTxn, { txn, size }];
                 })
             ]] as JsonNode
         );

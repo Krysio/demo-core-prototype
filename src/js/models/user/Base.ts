@@ -1,17 +1,7 @@
-import chalk from "chalk";
 import BufferWrapper from "@/libs/BufferWrapper";
 import { Key } from "@/models/key";
 
 /******************************/
-
-export const STATE_USER_INACTIVE = 0;
-export const STATE_USER_ACTIVE = 1;
-export const STATE_USER_SUSPEND = 2;
-
-type UserState =
-    typeof STATE_USER_INACTIVE |
-    typeof STATE_USER_ACTIVE |
-    typeof STATE_USER_SUSPEND;
 
 const EmptyBuffer = Buffer.alloc(0);
 
@@ -19,44 +9,10 @@ const EmptyBuffer = Buffer.alloc(0);
 
 export default class UserBase {
     protected type = 0;
-    protected key = null as Buffer;
+    protected key = EmptyBuffer;
 
     /******************************/
 
-    //#region constructor
-
-    constructor() { throw new Error('use Key.create({})'); }
-
-    static create(data: {
-        type?: number,
-        key?: Buffer
-    } = {}): UserBase {
-        data.type = data.type || 0;
-        data.key = data.key || EmptyBuffer;
-
-        const Type = this.typeMap[data.type];
-        if (Type) {
-            Object.setPrototypeOf(data, Type.prototype);
-        } else {
-            Object.setPrototypeOf(data, UserBase.prototype);
-        }
-        //@ts-ignore
-        return data as UserBase;
-    }
-
-    protected static typeMap = {} as { [key: number]: Function };
-    static defineType(
-        type: number,
-        transactionClass: Function
-    ) {
-        if (this.typeMap[type]) {
-            throw new Error("Type index is reserved");
-        }
-        this.typeMap[type] = transactionClass;
-        return transactionClass;
-    }
-
-    //#endregion
     //#region set-get
 
     getType(): number;
@@ -66,13 +22,6 @@ export default class UserBase {
             return BufferWrapper.numberToUleb128Buffer(this.type);
         }
         return this.type;
-    }
-    setType(value: number) {
-        if (this.type !== value) {
-            this.type = value;
-            //@ts-ignore
-            UserBase.create(this);
-        }
     }
 
     getKey(): Key;
@@ -89,31 +38,31 @@ export default class UserBase {
         } else {
             this.key = key.toBuffer();
         }
+        return this;
     }
 
     //#endregion
+    //#region logical
 
     verify() {
-        return false;
+        throw new Error("Not implement");
     }
 
+    //#endregion
     //#region import-export buffer
 
-    toBuffer() {
-        return BufferWrapper.concat([
-            this.getType('buffer'),
-            this.getDataBuffer()
-        ]);
+    toBuffer(
+        inBlock = false
+    ) {
+        return BufferWrapper.concat(this.getBufferStructure(inBlock));
     }
-    getDataBuffer(): Buffer {throw new Error();}
-    setDataFromBufferWrapper(data: BufferWrapper) {throw new Error();}
-
-    static fromBuffer(dataBuffer: Buffer) {
-        const buffer = BufferWrapper.create(dataBuffer);
-        const type = buffer.readUleb128();
-        const instance = this.create({ type });
-        instance.setDataFromBufferWrapper(buffer);
-        return instance;
+    getBufferStructure(
+        inBlock = false
+    ): Buffer[] {
+        throw new Error("Not implement");
+    }
+    setDataFromBufferWrapper(data: BufferWrapper) {
+        throw new Error("Not implement");
     }
 
     //#endregion

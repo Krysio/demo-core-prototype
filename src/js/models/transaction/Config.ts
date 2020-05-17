@@ -7,16 +7,17 @@ import { Block } from "../block";
 /******************************/
 
 const EMPTY = {};
-export const TYPE_TXN_CONFIG = 2;
-Base.defineType(TYPE_TXN_CONFIG, class TxnConfig extends Base {
+export const TYPE_TXN_SET_CONFIG = 2;
+export class TxnSetConfig extends Base {
+    protected type = TYPE_TXN_SET_CONFIG;
+
+    //#region logical
+
     verify(inputs: {
         block?: Block
     } = EMPTY) {
-        const data = this.getData();
+        const data = this.getData('buffer');
 
-        if (data === null) {
-            return false;
-        }
         if (inputs.block
             && inputs.block.getIndex() !== 0
         ) {
@@ -31,7 +32,7 @@ Base.defineType(TYPE_TXN_CONFIG, class TxnConfig extends Base {
     read(inputs: {
         context: Context
     }) {
-        const data = this.getData();
+        const data = this.getData('buffer');
 
         if (data !== null) {
             const config = Config.fromBuffer(data);
@@ -40,19 +41,28 @@ Base.defineType(TYPE_TXN_CONFIG, class TxnConfig extends Base {
         }
     }
 
-    getDataBuffer() {
-        const data = this.getData('buffer');
-        const dataSize = BufferWrapper.numberToUleb128Buffer(data.length);
-        return BufferWrapper.concat([dataSize, data]);
+    //#endregion
+    //#region import-export buffer
+
+    getBufferStructure() {
+        const buffData = this.getData('buffer');
+
+        return [
+            this.getType('buffer'),
+            BufferWrapper.numberToUleb128Buffer(buffData.length),
+            buffData
+        ];
     }
 
     setDataFromBufferWrapper(
         bufferWrapper: BufferWrapper
     ) {
-        this.setData(
-            bufferWrapper.read(
-                bufferWrapper.readUleb128()
-            )
-        );
+        this.setData(bufferWrapper.read(bufferWrapper.readUleb128()));
     }
-});
+
+    //#endregion
+}
+
+export default {
+    [TYPE_TXN_SET_CONFIG]: TxnSetConfig
+}

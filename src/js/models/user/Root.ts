@@ -4,18 +4,26 @@ import BufferWrapper from "@/libs/BufferWrapper";
 /******************************/
 
 export const TYPE_USER_ROOT = 0;
-Base.defineType(TYPE_USER_ROOT, class UserRoot extends Base {
+export class UserRoot extends Base {
+    protected type = TYPE_USER_ROOT;
+
+    //#region logical
+
     verify() {
         const key = this.getKey();
         return key.verify();
     }
 
-    getDataBuffer() {
-        const key = this.getKey('buffer');
-        return BufferWrapper.concat([
-            BufferWrapper.numberToUleb128Buffer(key.length),
-            key
-        ]);
+    //#endregion
+    //#region import-export buffer
+
+    getBufferStructure() {
+        const buffKey = this.getKey('buffer');
+        return [
+            this.getType('buffer'),
+            BufferWrapper.numberToUleb128Buffer(buffKey.length),
+            buffKey
+        ];
     }
 
     setDataFromBufferWrapper(
@@ -23,4 +31,9 @@ Base.defineType(TYPE_USER_ROOT, class UserRoot extends Base {
     ) {
         this.setKey(buff.read(buff.readUleb128()));
     }
-});
+
+    //#endregion
+}
+export default {
+    [TYPE_USER_ROOT]: UserRoot
+};
