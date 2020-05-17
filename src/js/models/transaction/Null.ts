@@ -1,10 +1,10 @@
-import Base from "./Base";
+import { TxnTypeInternal } from "./Base";
 import BufferWrapper from "@/libs/BufferWrapper";
 
 /******************************/
 
 export const TYPE_TXN_NULL = 0;
-export class TxnNull extends Base {
+export class TxnNull extends TxnTypeInternal {
     protected type = TYPE_TXN_NULL;
 
     //#region logical

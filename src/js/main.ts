@@ -19,20 +19,36 @@ import $, { JsonNode } from 'react-json-syntax';
 
 import Node from '@/models/node';
 import { createGenesisiForFastTest } from '@/factories/block';
+import { createAdmin } from '@/factories/txn';
 import { User, TYPE_USER_ROOT } from '@/models/user';
 
 const node = new Node();
 const genesis = createGenesisiForFastTest();
 const user = User.create(TYPE_USER_ROOT);
-import { Txn } from './models/transaction';
 
 user.setKey(genesis.rootKey.publicKey);
 console.log(
     node, genesis,
-    user, User.fromBuffer(user.toBuffer()),
-    genesis.txn.dbHashList, Txn.fromBuffer(genesis.txn.dbHashList.toBuffer())
+    user, User.fromBuffer(user.toBuffer())
 );
 node.takeBlock(genesis.blockGenesis);
+node.context.sync().then(() => {
+    const topBlock = node.getCurrentTopBlock();
+
+    const txnCreateAdmin1 = createAdmin({
+        level: 1,
+        targetBlockIndex: topBlock.getIndex(),
+        parentPrivateKey: genesis.rootKey.privateKey
+    });
+    const txnCreateAdmin2 = createAdmin({
+        level: 1,
+        targetBlockIndex: topBlock.getIndex(),
+        parentPrivateKey: genesis.rootKey.privateKey
+    });
+
+    node.takeTransaction(txnCreateAdmin1.txn);
+    node.takeTransaction(txnCreateAdmin2.txn);
+});
 
 /******************************/
 

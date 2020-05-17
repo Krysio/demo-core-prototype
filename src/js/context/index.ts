@@ -3,6 +3,7 @@ import * as UUID from "uuid";
 import Node from "@/models/node";
 import { Block } from "@/models/block";
 import { Config } from "@/models/Config";
+import { TxnAny } from "@/models/transaction";
 
 import createStore from "./store";
 
@@ -21,6 +22,8 @@ export default function createContext(
         'node/ready': [],
         'node/block/verify/accept': [Block],
         'node/block/verify/reject': [Block],
+        'node/txn/verify/accept': [TxnAny],
+        'node/txn/verify/reject': [TxnAny],
         'node/topBlock/compare': [Block],
         'node/topBlock/compare/accept': [Block],
         'node/topBlock/compare/reject': [Block],
@@ -30,7 +33,8 @@ export default function createContext(
 
         'db/keys/ready': [],
 
-        'input/block': [Block]
+        'input/block': [Block],
+        'input/txn': [TxnAny]
     }>;
 
     if (process.env.NODE_ENV !== "production") {

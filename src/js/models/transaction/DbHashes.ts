@@ -1,6 +1,5 @@
-import bson from "bson";
 import BufferWrapper from "@/libs/BufferWrapper";
-import Base from "./Base";
+import { TxnTypeInternal } from "./Base";
 import { Block } from "@/models/block";
 import { Hash } from "@/models/hash";
 
@@ -11,7 +10,7 @@ import { Hash } from "@/models/hash";
 
 const EMPTY = {};
 export const TYPE_TXN_DB_HASH_LIST = 3;
-export class TxnDbHashList extends Base {
+export class TxnDbHashList extends TxnTypeInternal {
     protected type = TYPE_TXN_DB_HASH_LIST;
 
     //#region logical

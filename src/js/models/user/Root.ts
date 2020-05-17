@@ -7,6 +7,8 @@ export const TYPE_USER_ROOT = 0;
 export class UserRoot extends Base {
     protected type = TYPE_USER_ROOT;
 
+    getLevel() {return 0;}
+
     //#region logical
 
     verify() {

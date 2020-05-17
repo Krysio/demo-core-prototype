@@ -374,6 +374,11 @@ $jumbotron-bg: $bgSecondary;
     .txn-blockHash {color: rgb(255, 0, 0);}
     .txn-data {color: rgb(255, 230, 0);}
     .txn-dataSize {color: rgb(200, 200, 200);}
+    .txn-signatureSize {color: rgb(200, 200, 200);}
+    .txn-signature {color: rgb(0, 255, 0);}
+    .txn-signedBlock-index {color: rgb(255, 0, 255);}
+    .txn-signedBlock-hash {color: rgb(255, 0, 255);}
+    .txn-authorId {color: rgb(56, 86, 255);}
 }
 
 .react-tabs__tab-list {

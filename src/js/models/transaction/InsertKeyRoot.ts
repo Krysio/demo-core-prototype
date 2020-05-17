@@ -1,6 +1,6 @@
 import { Context } from "@/context";
 import BufferWrapper from "@/libs/BufferWrapper";
-import Base from "./Base";
+import { TxnTypeInternal } from "./Base";
 import { Block } from "@/models/block";
 import { User, UserRoot, TYPE_USER_ROOT } from "@/models/user";
 
@@ -8,7 +8,7 @@ import { User, UserRoot, TYPE_USER_ROOT } from "@/models/user";
 
 const EMPTY = {};
 export const TYPE_TXN_INSERT_KEY_ROOT = 1;
-export class TxnInsertKeyRoot extends Base {
+export class TxnInsertKeyRoot extends TxnTypeInternal {
     protected type = TYPE_TXN_INSERT_KEY_ROOT;
 
     //#region set-get

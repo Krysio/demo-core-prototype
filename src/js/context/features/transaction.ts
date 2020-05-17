@@ -1,5 +1,5 @@
 import { Context } from "@/context";
-import { Txn, TxnAny } from "@/models/transaction";
+import { TxnAny } from "@/models/transaction";
 import { Block } from "@/models/block";
 
 /******************************/
@@ -8,10 +8,21 @@ export default function (refContext: unknown) {
     const context = refContext as Context;
 
     return {
-        waitedTransactions: {} as {[key: string]: TxnAny[]},
+        waitedTransactionsSigningBlockHash: {} as {[key: string]: TxnAny[]},
+        waitedTransactionsSigningBlockIndex: {} as {[key: number]: TxnAny[]},
         async insertWaitingTransactionsToBlock(
             block: Block
         ) {
+            const index = block.getIndex() - 2;
+            const ref = context.waitedTransactionsSigningBlockIndex[ index ];
+            if (ref) {
+                for (let txn of ref) {
+                    block.insertTransaction(txn.toBuffer(true));
+                }
+
+                delete context.waitedTransactionsSigningBlockIndex[ index ];
+            }
+
             const previousBlockHash = block.getPreviousBlockHash();
 
             if (previousBlockHash !== null) {
@@ -24,14 +35,13 @@ export default function (refContext: unknown) {
 
                     if (key !== null) {
                         const keyString = key.toString('hex');
-                        const ref = context.waitedTransactions[ keyString ];
-
+                        const ref = context.waitedTransactionsSigningBlockHash[ keyString ];
                         if (ref) {
                             for (let txn of ref) {
                                 block.insertTransaction(txn.toBuffer(true));
                             }
 
-                            delete context.waitedTransactions[ keyString ];
+                            delete context.waitedTransactionsSigningBlockHash[ keyString ];
                         }
                     }
                 }

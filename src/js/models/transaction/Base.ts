@@ -6,8 +6,8 @@ const EmptyBuffer = Buffer.alloc(0);
 
 /******************************/
 
-export default class TxnBase {
-    protected type = 0;
+export abstract class TxnAny {
+    protected abstract type: number;
     protected data = EmptyBuffer;
 
     /******************************/
@@ -56,12 +56,8 @@ export default class TxnBase {
     //#endregion
     //#region logical
 
-    verify(inputs: {}): boolean | Promise<boolean> {
-        throw new Error("Not implement");
-    }
-    read(inputs: {}): void {
-        throw new Error("Not implement");
-    }
+    abstract verify(inputs?: {}): boolean | Promise<boolean>;
+    abstract read(inputs?: {}): void;
 
     //#endregion
     //#region import-export buffer
@@ -71,14 +67,30 @@ export default class TxnBase {
     ) {
         return BufferWrapper.concat(this.getBufferStructure(inBlock));
     }
-    getBufferStructure(
-        inBlock = false
-    ): Buffer[] {
-        throw new Error("Not implement");
-    }
-    setDataFromBufferWrapper(data: BufferWrapper) {
-        throw new Error("Not implement");
-    }
+    abstract getBufferStructure(inBlock: boolean): Buffer[];
+    abstract setDataFromBufferWrapper(data: BufferWrapper): void;
 
     //#endregion
+}
+export abstract class TxnTypeInternal extends TxnAny {}
+export abstract class TxnTypeAdmin extends TxnAny {
+    abstract getSigningBlockIndex(): number;
+    abstract getSigningBlockIndex(format: 'buffer'): BufferWrapper;
+    abstract setSigningBlockIndex(value: number): this;
+    abstract getAuthorId(): number;
+    abstract getAuthorId(format: 'buffer'): BufferWrapper;
+    abstract setAuthorId(value: number): this;
+    abstract getSignature(): Buffer;
+    abstract setSignature(value: Buffer): this;
+    abstract getHash(): Buffer;
+}
+export abstract class TxnTypeUser extends TxnAny {
+    abstract getSigningBlockHash(): Buffer;
+    abstract setSigningBlockHash(value: Buffer): this;
+    abstract getAuthorId(): number;
+    abstract getAuthorId(format: 'buffer'): BufferWrapper;
+    abstract setAuthorId(value: number): this;
+    abstract getSignature(): Buffer;
+    abstract setSignature(value: Buffer): this;
+    abstract getHash(): Buffer;
 }

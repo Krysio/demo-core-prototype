@@ -1,6 +1,6 @@
 import { Context } from "@/context";
 import BufferWrapper from "@/libs/BufferWrapper";
-import Base from "./Base";
+import { TxnTypeInternal } from "./Base";
 import { Config } from "../Config";
 import { Block } from "../block";
 
@@ -8,7 +8,7 @@ import { Block } from "../block";
 
 const EMPTY = {};
 export const TYPE_TXN_SET_CONFIG = 2;
-export class TxnSetConfig extends Base {
+export class TxnSetConfig extends TxnTypeInternal {
     protected type = TYPE_TXN_SET_CONFIG;
 
     //#region logical

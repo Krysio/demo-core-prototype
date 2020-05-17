@@ -9,10 +9,13 @@ export default function(rawContext: unknown) {
     return {
         topBlock: {
             current: null as Block | null,
+            second: null as Block | null,
             candidate: null as Block | null,
         },
         hasTopBlock() {return context.topBlock.current !== null;},
         getTopBlock() {return context.topBlock.current as Block;},
+        hasSecondTopBlock() {return context.topBlock.second !== null;},
+        getSecondTopBlock() {return context.topBlock.second as Block;},
         hasTopBlockCandidate() {return context.topBlock.candidate !== null;},
         getTopBlockCandidate() {return context.topBlock.candidate as Block;}
     };

@@ -1,22 +1,23 @@
 import BufferWrapper from "@/libs/BufferWrapper";
 
-import Base from "./Base"
-export { Base as TxnAny };
-
+export * from "./Base";
 import TxnNull from "./Null";
 export * from "./Null";
-import TxnInsertRootKey from "./RootKey";
-export * from "./RootKey";
+import TxnInsertRootKey from "./InsertKeyRoot";
+export * from "./InsertKeyRoot";
 import TxnSetConfig from "./Config";
 export * from "./Config";
 import TxnDbHashList from "./DbHashes";
 export * from "./DbHashes";
+import TxnInsertAdminKey from "./InsertKeyAdmin";
+export * from "./InsertKeyAdmin";
 
 const TxnTypes = {
     ...TxnNull,
     ...TxnInsertRootKey,
     ...TxnSetConfig,
-    ...TxnDbHashList
+    ...TxnDbHashList,
+    ...TxnInsertAdminKey
 };
 type TxnType = keyof typeof TxnTypes;
 
