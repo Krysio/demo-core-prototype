@@ -1,0 +1,28 @@
+@function stripUnits($number, $baseSize: 16px) {
+    @return $number / ($number * 0 + 1);
+}
+
+@function calcFont($v, $unitType, $baseSize) {
+    $mainSize: stripUnits($baseSize);
+
+    @if type-of($v) == 'number' {
+        @if (unitless($v)) or (unit($v) == "px") {
+            @return stripUnits($v) / $mainSize * $unitType;
+        } @else if unit($v) == "%" {
+            @return stripUnits($v) / 100 * $unitType;
+        } @else if unit($v) == "rem" {
+            @return unit($v) * $unitType;
+        }
+    }
+
+    @warn "Incorrect value: #{$v}";
+
+    @return $v;
+}
+
+@function rem($v, $baseSize: 16px) {
+    @return calcFont($v, 1rem, $baseSize);
+}
+@function em($v, $baseSize: 16px) {
+    @return calcFont($v, 1em, $baseSize);
+}

@@ -1,0 +1,732 @@
+@import "../../node_modules/bootstrap/scss/functions";
+@import "helpers";
+
+/** REPLACE BOOTSTRAP VARIBLES * START */
+
+$spacer: 1em;
+$spacers: (
+    0: 0,
+    1: ($spacer * 0.15),
+    2: ($spacer * 0.25),
+    3: ($spacer * 0.5),
+    4: ($spacer * 0.75),
+    5: ($spacer * 1),
+    6: ($spacer * 1.5),
+    7: ($spacer * 1.75),
+    8: ($spacer * 2)
+);
+$grid-gutter-width: 1em;
+
+// Color system
+
+$white:    #fff !default;
+$gray-100: #f8f9fa !default;
+$gray-200: #e9ecef !default;
+$gray-300: #dee2e6 !default;
+$gray-400: #ced4da !default;
+$gray-500: #adb5bd !default;
+$gray-600: #6c757d !default;
+$gray-700: #495057 !default;
+$gray-800: #343a40 !default;
+$gray-900: #212529 !default;
+$black:    #000 !default;
+
+// [custom]
+
+$baseSize: 12;
+$box-shadow-1: 0 0 0 em(1, $baseSize) $gray-900;
+$box-shadow-2: 0 0 0 em(1, $baseSize) $gray-700;
+
+// stylelint-disable value-keyword-case
+
+$font-family-sans-serif:      -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+$font-family-monospace:       SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !default;
+$font-family-base:            $font-family-sans-serif !default;
+
+$primary: #000000aa;
+
+$link-color: #007bff;
+
+$bgPrimary: #000000;
+$bgSecondary: #111111;
+
+$yiq-text-dark: $gray-900;
+$yiq-text-light: $white;
+
+$body-bg: $bgPrimary;
+$body-color: $white;
+
+$base-padding-x: em(8, $baseSize);
+$base-padding-y: em(4, $baseSize);
+
+$input-btn-padding-x: $base-padding-x;
+$input-btn-padding-y: $base-padding-y;
+$input-btn-font-family: $font-family-monospace;
+$input-btn-font-size: em(10, $baseSize);
+$input-btn-line-height: 1.2;
+$custom-select-indicator-padding: 1em;
+
+// input
+
+$input-bg: $bgSecondary;
+$input-disabled-bg: $gray-800;
+
+$input-color: $gray-100;
+$input-border-color: $primary;
+
+// modal
+
+$modal-content-bg: $bgPrimary;
+
+// table
+
+$table-cell-padding: em(6, $baseSize);
+$table-cell-padding-sm: em(3, $baseSize);
+
+// dropdowns
+
+$dropdown-min-width: em(6, $baseSize);
+$dropdown-padding-y: 0;
+$dropdown-font-size: 1em;
+$dropdown-color: $gray-100;
+$dropdown-bg: transparent;
+$dropdown-border-color: $bgSecondary;
+$dropdown-border-radius: 0;
+$dropdown-border-width: em(1, $baseSize);
+$dropdown-spacer: 0;
+$dropdown-item-padding-x: $base-padding-x;
+$dropdown-item-padding-y: $base-padding-y;
+$dropdown-link-color: $gray-400;
+$dropdown-link-hover-color: $white;
+$dropdown-link-hover-bg: $bgSecondary;
+$dropdown-header-color: $gray-400;
+
+// Jumbotron
+
+$jumbotron-padding: 1em;
+$jumbotron-color: null;
+$jumbotron-bg: $bgSecondary;
+
+/** REPLACE BOOTSTRAP VARIBLES * END */
+
+@import "../../node_modules/bootstrap/scss/variables";
+@import "../../node_modules/bootstrap/scss/mixins";
+
+// Button sizes
+@mixin button-size($padding-y, $padding-x, $font-size, $line-height, $border-radius) {
+    padding: $padding-y * 1.1 $padding-x $padding-y * 0.9 $padding-x;
+    @include font-size($font-size);
+    line-height: $line-height;
+    // Manually declare to provide an override to the browser default
+    @include border-radius($border-radius, 0);
+}
+
+@import "import";
+
+.dropdown-divider {
+    margin: 0.25em 0 0;
+    border-color: inherit;
+}
+
+/** CUSTOM MIXINS * START */
+
+@mixin bgCarbon {
+    background-color: rgb(32, 32, 32);
+    background-image: linear-gradient(
+        45deg,
+        $bgPrimary 24%,
+        transparent 26%,
+        transparent 74%,
+        $bgPrimary 76%,
+        $bgPrimary
+    ), linear-gradient(
+        45deg,
+        $bgPrimary 24%,
+        transparent 26%,
+        transparent 74%,
+        $bgPrimary 76%,
+        $bgPrimary
+    ), linear-gradient(
+        to bottom,
+        $bgSecondary,
+        $gray-900
+    );
+    background-size: rem(8) rem(8), rem(8) rem(8), rem(8) rem(4);
+    background-position: 0px 0px, rem(4) rem(4), 0px 0px;
+}
+
+@mixin absolute-stretch {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+}
+
+.ofh {
+    overflow: hidden;
+}
+
+.ifx-ac {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.ifx-as {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+.fx-ac {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/** CUSTOM MIXINS * END */
+/** REPLACE MODAL * START */
+
+.modal {
+    z-index: 1;
+}
+
+.modal-container {
+    @include absolute-stretch;
+    overflow: hidden;
+
+    .modal-slot {
+        position: absolute;
+        top: 0; left: 0;
+        width: 0;
+        height: 0;
+
+        & > .modal {
+            opacity: 0.8;
+        }
+        &.active > .modal {
+            opacity: 1;
+        }
+    }
+
+    .modal {
+        position: absolute;
+        width: 0px;
+        height: 0px;
+        overflow: visible;
+        transition: opacity 0.2s ease;
+
+        // DEBUG
+        // &:after {
+        //     content: ' ';
+        //     width: 0;
+        //     left: 0;
+        //     outline: solid 2px rgba(red, 1);
+        //     display: block;
+        // }
+
+        &.show {
+            display: block;
+        }
+
+        .close {
+            margin: #{-(em(5))} #{-(em(10))} #{-(em(5))} 0;
+            padding: 0 em(10);
+            color: $white;
+            text-shadow: none;
+            display: flex;
+            align-self: stretch;
+            align-items: center;
+            float: none;
+
+            & > span {
+                position: relative;
+                width: em(5, $baseSize);
+                height: em(5, $baseSize);
+                display: block;
+                transition: all 0.3s ease;
+
+                &:after,
+                &:before {
+                    $width: em(1, $baseSize);
+
+                    content: ' ';
+                    position: absolute;
+                    top: 0; bottom: 0;
+                    left: 50%;
+                    margin-left: -($width / 2);
+                    width: $width;
+                    background-color: #fff;
+                    display: block;
+                }
+                &:before {transform: rotate(-45deg);}
+                &:after {transform: rotate(45deg);}
+            }
+
+            &:hover > span {
+                transform: rotate(180deg);
+            }
+        }
+
+        &.mode-1, &.mode-3 {
+            .modal-dialog {right: 0}
+        }
+        &.mode-2, &.mode-3 {
+            .modal-dialog {bottom: 0}
+        }
+    }
+
+    .modal-dialog {
+        position: absolute;
+        margin: 0;
+        max-width: 100vw;
+        max-height: 100vh;
+    }
+
+    .modal-content {
+        position: relative;
+        width: auto;
+        border: none;
+        background: none;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        $border: solid em(3, $baseSize) $black;
+
+        padding: em(5, $baseSize) em(10, $baseSize);
+        border: $border;
+        border-top: none;
+        border-radius: 0;
+        background-color: rgba($bgPrimary, 0.95);
+
+        &:first-child {
+            border-top: $border;
+        }
+    }
+
+    .modal-header {
+        box-shadow: 0 0 em(15, $baseSize) 0 rgba($white, 0.1) inset;
+        @include bgCarbon;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+
+        &:not(:active) {
+            cursor: grab;
+        }
+    }
+
+    .modal-body {
+        overflow-y: auto;
+        max-height: 60vh;
+    }
+    .modal.moveing .modal-body {// chrome render bug
+        overflow: hidden;
+    }
+
+    .modal-body,
+    .modal-footer {
+        box-shadow: 0 0 0 em(1, $baseSize) $bgSecondary inset;
+    }
+}
+
+/** CUSTOM MODAL * END */
+/** REPLACE BOOTSTRAP * START */
+
+.btn,
+.form-control {
+    box-shadow: $box-shadow-1;
+    &:hover {
+        box-shadow: $box-shadow-2;
+    }
+}
+
+.dropdown-header {
+    padding: $dropdown-item-padding-y $dropdown-item-padding-x;
+}
+
+/** REPLACE BOOTSTRAP * END */
+/** CUSTOM STYLES * START */
+
+.node {
+    width: 100%;
+    line-height: 1.1;
+
+    div {
+        padding-top: 0.15em;
+        padding-bottom: 0.15em;
+        width: 100%;
+        word-wrap: break-word;
+    }
+}
+
+.block {
+    .block-index {color: rgb(255, 255, 255);}
+    .block-time {color: rgb(56, 86, 255);}
+    .block-prevHash {color: rgb(255, 0, 0);}
+    .block-bodySize {color: rgb(200, 200, 200);}
+}
+.txn {
+    .txn-size {
+        padding-right: 1em;
+        color: rgb(200, 200, 200);
+    }
+    .txn-blockHash {color: rgb(255, 0, 0);}
+    .txn-data {color: rgb(255, 230, 0);}
+    .txn-dataSize {color: rgb(200, 200, 200);}
+}
+
+.react-tabs__tab-list {
+    margin-bottom: 0;
+    border-bottom: none;
+}
+.react-tabs__tab {
+    margin: em(1.5, $baseSize);
+    padding: em(3, $baseSize) em(10, $baseSize);
+    color: $gray-200;
+    background-color: $bgSecondary;
+    border-color: $bgSecondary;
+    border-top-left-radius: em(5, $baseSize);
+    border-top-right-radius: em(5, $baseSize);
+    user-select: none;
+}
+.react-tabs__tab--selected {
+    color: $white;
+    background-color: $gray-900;
+    border-color: $bgSecondary;
+
+    &:after {
+        display: none;
+    }
+}
+.react-tabs__tab-panel {
+    padding: em(2, $baseSize);
+    border: solid 1px $bgSecondary;
+}
+
+// scroll
+
+/* width */
+::-webkit-scrollbar {
+    padding-left: 0.2em;
+    width: 0.5em;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 0.5em $gray-900;
+    border-radius: 0.5em;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: $gray-900;
+    border-radius: 10px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    background: $gray-800;
+}
+
+// body
+
+html, body {
+    font-size: calc(12px + 0.6vw);
+    height: 100%;
+}
+
+body {
+    font-family: $font-family-monospace;
+    font-size: rem($baseSize);
+    background-color: $bgPrimary;
+}
+
+#root {
+    @include absolute-stretch;
+}
+
+.layout-map {
+    @include absolute-stretch;
+    @include bgCarbon;
+
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+
+    .top-bar {
+        position: relative;
+        padding: rem(6) rem(10);
+        border-bottom: solid rem(3) rgba($bgPrimary, 0.75);
+        box-shadow: 0 0 rem(15) 0 $bgPrimary inset;
+        display: flex;
+        justify-content: space-between;
+
+        .left {
+            flex-basis: 1;
+        }
+        .right {
+            display: block;
+        }
+    }
+    .canvas {
+        padding: rem(5);
+        display: flex;
+        align-items: stretch;
+        flex-grow: 1;
+
+        & > div {
+            position: relative;
+            flex-grow: 1;
+            overflow: hidden;
+            border-radius: rem(6);
+            box-shadow: 0 0 rem(1) rem(2) $bgPrimary, 0 0 rem(3) 0 $bgPrimary;
+
+            & > canvas {
+                @include absolute-stretch;
+            }
+
+            &:after {
+                content: ' ';
+                @include absolute-stretch;
+                display: block;
+                border-radius: rem(6);
+                box-shadow: 0 0 rem(10) 0 $bgPrimary inset;
+                pointer-events: none;
+            }
+        }
+    }
+}
+
+/** CUSTOM STYLES * END */
+
+.dialog-modal .modal-content {
+    min-width: 20vw;
+}
+
+// Color picker restyle
+
+.rc-color-picker-panel {
+    background-color: transparent;
+}
+.rc-color-picker-panel-inner {
+    box-shadow: none;
+    border: none;
+}
+.rc-color-picker-panel-params-lable-number:hover {
+    color: $black;
+}
+
+// tooltip
+
+.tooltipModal {
+    pointer-events: none;
+    user-select: none;
+
+    table {
+        background-color: transparent;
+        max-width: max-content;
+
+        td {
+            border-top: none;
+        }
+        tr + tr td {
+            border-top: solid em(1) $bgSecondary;
+        }
+    }
+
+    table.table-sm td {
+        $xPadding: em(8, $baseSize);
+
+        padding-left: $xPadding;
+        padding-right: $xPadding;
+    }
+
+    .icon {
+        color: $gray-600;
+    }
+}
+
+// value-format
+
+.value-format {
+    span {
+        margin: 0 em(2, $baseSize);
+    }
+
+    .special-char {color: $gray-700;}
+    .unit {color: $gray-600;}
+    .value-1 {color: #96c0eb;}
+    .value-2 {color: #96eba4;}
+    .value-3 {color: #e5eb96;}
+    .value-4 {color: #eb9696;}
+    .value-5 {color: #e196eb;}
+}
+
+.map-item {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+// searchModal
+
+.searchModal {
+    min-width: 20vw;
+
+    .result-list {
+        padding-right: em(3, $baseSize);
+    }
+}
+
+// page list
+
+img.img-flag {
+    padding: 0.2em;
+    width: 2em;
+    height: 1.5em;
+    border-radius: em(2, $baseSize);
+    background-color: rgba(0,0,0,0.5);
+    display: inline-block;
+}
+
+// marker
+
+.markersModal {
+    .modal-content {
+        min-width: 30em;
+    }
+}
+
+.marker {
+    margin: 0.2em 0;
+    padding: em(2, $baseSize);
+    border-radius: 0.3em;
+    border: solid 1px rgba($gray-900, 0.5);
+    background-color: rgba($bgSecondary, 0.3);
+
+    opacity: 0.5;
+    &.active {
+        opacity: 1;
+    }
+    &.dragged {
+        opacity: 0.5;
+    }
+
+    .marker-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .marker-header + .marker-body {
+        margin-top: 0.2em;
+    }
+
+    .marker-body {
+        margin: 0 em(-3, $baseSize);
+        padding: 0.2em 0.2em 0.2em 0.2em;
+        border-radius: 0.3em;
+        border: solid 1px rgba($gray-900, 0.3);
+        background-color: rgba($bgPrimary, 0.3);
+    }
+}
+
+.marker-item {
+    margin: 0.2em 0;
+    padding: 0.4em;
+    border-radius: 0.3em;
+    border: solid 1px rgba($gray-900, 0.5);
+    background-color: rgba($bgSecondary, 0.3);
+    display: flex;
+    justify-content: space-between;
+
+    opacity: 0.5;
+    &.active {
+        opacity: 1;
+    }
+
+    & > div {
+        margin: -0.2em;
+
+        & > * {
+            margin: 0.2em;
+        }
+    }
+}
+
+
+.topTribeTable {
+    display: grid;
+    grid-template: 'p name points offdef counts villagestop villagesworld';
+
+    & > * {
+        padding: 0.1em 0.4em;
+        border: solid 1px $bgSecondary;
+    }
+}
+.topCharacterTable {
+    display: grid;
+    grid-template: 'p name tribe points off def bash counts';
+
+    & > * {
+        padding: 0.1em 0.4em;
+        border: solid 1px $bgSecondary;
+    }
+}
+
+.privacy-settings {
+    min-width: em(400, $baseSize);
+}
+.modal-gdrp {
+    font-size: 1.4em;
+    background-color: rgba($bgPrimary, 0.9);
+
+    .modal-content {
+        border: solid 0.2em $bgSecondary;
+    }
+
+    .modal-body {
+        padding: 1em 1.3em;
+    }
+
+    .modal-footer {
+        border-top: solid 0.2em $bgSecondary;
+    }
+}
+
+
+.info-village {
+    display: flex;
+    flex-direction: column;
+}
+.info-village > *,
+.info-village > * > * {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.info-content {
+    display: flex;
+    flex-direction: column;
+}
+.info-content .list {
+    margin-top: 0.6em;
+    display: flex;
+    flex-direction: column;
+}
+.info-content .list > * {
+    padding: 0.2em 0.3em;
+    border: solid em(1.2, $baseSize) $bgSecondary;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+}
+.info-content .list > * > * {
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}

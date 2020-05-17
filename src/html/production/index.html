@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Tribal Wars 2 Map</title>
+        <meta content="width=device-width,minimum-scale=1.0,maximum-scale=5.0" name="viewport">
+        <link rel="stylesheet" type="text/css" href="/css/main.css">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="description" content="A tool for tribalwars2.com's users, in beta.">
+        <!-- Google Adsense Begin -->
+        <script>
+            function initGoogleAdSense() {
+                var googleAdSenseScript = document.getElementById('google-adsense');
+
+                // AdSense
+
+                if (!googleAdSenseScript) {
+                    var scripElement = document.createElement('script');
+
+                    scripElement.setAttribute('id', 'google-adsense');
+                    scripElement.setAttribute('data-ad-client', 'ca-pub-6983586103515740');
+                    scripElement.setAttribute('src', 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js');
+
+                    document.body.appendChild(scripElement);
+                }
+            }
+        </script>
+        <!-- Google Adsense End -->
+    </head>
+    <body>
+        <div id="loader" class="d-flex justify-content-center align-items-center h-100">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+        </div>
+        <div id="root"></div>
+        <script src="/js/bundle.js"></script>
+    </body>
+</html>

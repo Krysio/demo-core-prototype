@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "sourceMap": true,
+        "lib": ["dom", "scripthost", "es2015", "es2016", "es2017", "es2018", "es2019"],
+        "allowJs": true,
+        "target": "es2019",
+        "module": "es6",
+        "moduleResolution": "Node",
+        "esModuleInterop": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/js/*"]
+        },
+
+    },
+    "include": ["src/js/**/*"],
+    "exclude": ["**/*.test.ts"]
+}
