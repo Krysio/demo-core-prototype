@@ -5,6 +5,7 @@ import topBlock from "./topBlock";
 import config from "./config";
 import state from "./state";
 import clock from "./clock";
+import user from "./user";
 import inputBlock from "./input/block";
 import inputTxn from "./input/txn";
 import nodeBlockAccepted from "./node/blockAccepted";
@@ -30,6 +31,7 @@ export default function (rawContext: unknown) {
         ...transaction(rawContext),
         ...block(rawContext),
         ...topBlock(rawContext),
-        ...clock(rawContext)
+        ...clock(rawContext),
+        ...user(rawContext)
     };
 }

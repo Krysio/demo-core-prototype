@@ -1,17 +1,20 @@
-class KeyStore {
+class UserStore {
     map = new Map<number, Buffer>();
 
-    put(
+    async put(
         key: number,
         data: Buffer
     ) {
         this.map.set(key, data);
     }
-    get(key: number) {
+    async get(key: number) {
         return this.map.get(key) || null;
+    }
+    async del(key: number) {
+        this.map.delete(key);
     }
 }
 
 export default function() {
-    return new KeyStore();
+    return new UserStore();
 }

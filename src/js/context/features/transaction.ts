@@ -17,7 +17,7 @@ export default function (refContext: unknown) {
             const ref = context.waitedTransactionsSigningBlockIndex[ index ];
             if (ref) {
                 for (let txn of ref) {
-                    block.insertTransaction(txn.toBuffer(true));
+                    block.insertTransaction(txn.toBuffer(false));
                 }
 
                 delete context.waitedTransactionsSigningBlockIndex[ index ];
@@ -38,7 +38,7 @@ export default function (refContext: unknown) {
                         const ref = context.waitedTransactionsSigningBlockHash[ keyString ];
                         if (ref) {
                             for (let txn of ref) {
-                                block.insertTransaction(txn.toBuffer(true));
+                                block.insertTransaction(txn.toBuffer(false));
                             }
 
                             delete context.waitedTransactionsSigningBlockHash[ keyString ];

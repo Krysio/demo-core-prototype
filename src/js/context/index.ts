@@ -23,7 +23,7 @@ export default function createContext(
         'node/block/verify/accept': [Block],
         'node/block/verify/reject': [Block],
         'node/txn/verify/accept': [TxnAny],
-        'node/txn/verify/reject': [TxnAny],
+        'node/txn/verify/reject': [TxnAny, number],
         'node/topBlock/compare': [Block],
         'node/topBlock/compare/accept': [Block],
         'node/topBlock/compare/reject': [Block],

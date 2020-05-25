@@ -12,7 +12,7 @@ export default function (rawContext: unknown) {
         for (let txnBuffer of block.getBody()) {
             const txn = Txn.fromBuffer(txnBuffer);
             // czytanie każdej transakcji
-            txn.read({ context });
+            txn.read(context);
         }
     });
 }

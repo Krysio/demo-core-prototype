@@ -33,6 +33,13 @@ export class TxnInsertKeyRoot extends TxnTypeInternal {
     //#endregion
     //#region logical
 
+    async verifyPrepareInputs(
+        context: Context,
+        block: Block
+    ) {
+        return { block };
+    }
+
     verify(inputs: {
         block?: Block
     } = EMPTY) {
@@ -53,13 +60,13 @@ export class TxnInsertKeyRoot extends TxnTypeInternal {
         }
     }
 
-    read(inputs: {
+    read(
         context: Context
-    }) {
+    ) {
         const data = this.getData('buffer');
 
         if (data !== null) {
-            inputs.context.store.keys.put(0, data);
+            context.storeUserWithId(0, data);
         }
     }
 

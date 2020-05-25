@@ -2,6 +2,7 @@ import BufferWrapper from "@/libs/BufferWrapper";
 import { TxnTypeInternal } from "./Base";
 import { Block } from "@/models/block";
 import { Hash } from "@/models/hash";
+import { Context } from "@/context";
 
 /******************************/
 
@@ -14,6 +15,13 @@ export class TxnDbHashList extends TxnTypeInternal {
     protected type = TYPE_TXN_DB_HASH_LIST;
 
     //#region logical
+
+    async verifyPrepareInputs(
+        context: Context,
+        block: Block
+    ) {
+        return { block };
+    }
 
     verify(inputs: {
         block?: Block

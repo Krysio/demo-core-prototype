@@ -1,19 +1,19 @@
 import { Context } from "@/context";
 import * as secp256k1 from "@/services/crypto/ec/secp256k1";
 import { TxnTypeAdmin } from "./Base";
-import { User, UserAdmin, TYPE_USER_ADMIN, UserRoot } from "@/models/user";
+import { User, UserUser, UserRoot, UserAdmin, TYPE_USER_USER } from "@/models/user";
 import { TYPE_KEY_Secp256k1 } from "@/models/key";
 import BufferWrapper from "@/libs/BufferWrapper";
 
 /******************************/
 
-export const TYPE_TXN_INSERT_KEY_ADMIN = 16;
-export class TxnInsertKeyAdmin extends TxnTypeAdmin {
-    protected type = TYPE_TXN_INSERT_KEY_ADMIN;
+export const TYPE_TXN_INSERT_KEY_USER = 17;
+export class TxnInsertKeyUser extends TxnTypeAdmin {
+    protected type = TYPE_TXN_INSERT_KEY_USER;
 
     //#region set-get
 
-    getData(): UserAdmin;
+    getData(): UserUser;
     getData(format: 'buffer'): Buffer;
     getData(format?: 'buffer') {
         if (format) {
@@ -21,7 +21,7 @@ export class TxnInsertKeyAdmin extends TxnTypeAdmin {
         }
         return User.fromBuffer(this.data);
     }
-    setData(value: UserAdmin | Buffer) {
+    setData(value: UserUser | Buffer) {
         if (value instanceof Buffer) {
             this.data = value;
         } else {
@@ -49,20 +49,16 @@ export class TxnInsertKeyAdmin extends TxnTypeAdmin {
             return false;
         }
 
-        // TODO userId nie jest zajęty
-
         try {
             const user = this.getData();
-            if (user.getType() !== TYPE_USER_ADMIN) {
+            if (user.getType() !== TYPE_USER_USER) {
                 return false;
             }
 
+            const author = inputs.author;
             if (!(author instanceof UserRoot)
                 && !(author instanceof UserAdmin)
             ) {
-                return false;
-            }
-            if (author.getLevel() + 1 !== user.getLevel()) {
                 return false;
             }
 
@@ -89,6 +85,7 @@ export class TxnInsertKeyAdmin extends TxnTypeAdmin {
         const buff = BufferWrapper.create(data).seek(0);
 
         buff.readUleb128(); // type
+        buff.readUleb128(); // state
 
         const userId = buff.readUleb128();
 
@@ -100,5 +97,5 @@ export class TxnInsertKeyAdmin extends TxnTypeAdmin {
     //#endregion
 }
 export default {
-    [TYPE_TXN_INSERT_KEY_ADMIN]: TxnInsertKeyAdmin
+    [TYPE_TXN_INSERT_KEY_USER]: TxnInsertKeyUser
 }

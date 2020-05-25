@@ -1,5 +1,5 @@
 import { Context } from "@/context";
-import { TxnAny, TxnTypeAdmin, TxnTypeUser } from "@/models/transaction";
+import { TxnAny, TxnTypeAdmin, TxnTypeUser, TxnTypeInternal } from "@/models/transaction";
 import { Block } from "@/models/block";
 import Time from "@/services/Time";
 import { UserRoot, UserAdmin, User } from "@/models/user";
@@ -10,14 +10,24 @@ export default function (rawContext: unknown) {
     const context = rawContext as Context;
 
     context.events.on('input/txn', async (txn: TxnAny) => {
-        if (context.hasTopBlock() === false) {
-            context.events.emit('node/txn/verify/reject', txn);
+        // Node nie działa
+        if (context.hasTopBlock() === false
+            || context.hasConfig() === false
+        ) {
+            context.events.emit('node/txn/verify/reject', txn, 0);
             return;
         }
-        if (context.hasConfig() === false) {
-            context.events.emit('node/txn/verify/reject', txn);
+
+        // Transakcje wewnętrzne nie przychodzą z sieci
+        if (txn instanceof TxnTypeInternal) {
+            context.events.emit('node/txn/verify/reject', txn, 1);
             return;
         }
+
+        // Sprawdzamy czy txn może zostać przyjęta odnośnie czasu,
+        // wskazania na blok
+        // transakcja zostanie przyjęta jeśli podpisuje aktualny blok na szcycie
+        // lub jego poprzednika i nie mineło czasu więcej niż min(1min, połowaOkresuMiędzyBlokami)
 
         const config = context.getConfig();
         const firstTopBlock = context.getTopBlock();
@@ -26,9 +36,6 @@ export default function (rawContext: unknown) {
             60e3,
             Math.ceil(config.getDiscreteBlockPeriod() / 2)
         );
-
-        // wskazanie na blok
-
         let validSignTarget = false;
 
         if (txn instanceof TxnTypeAdmin
@@ -44,7 +51,7 @@ export default function (rawContext: unknown) {
             const signedBlock = await context.getBlockByHash(txn.getSigningBlockHash());
 
             if (signedBlock === null) {
-                context.events.emit('node/txn/verify/reject', txn);
+                context.events.emit('node/txn/verify/reject', txn, 2);
                 return;
             }
 
@@ -60,32 +67,19 @@ export default function (rawContext: unknown) {
         }
 
         if (validSignTarget === false) {
-            context.events.emit('node/txn/verify/reject', txn);
+            context.events.emit('node/txn/verify/reject', txn, 3);
             return;
         }
 
-        // autor
-
-        const inputs = {} as {
-            author?: User;
-        };
-        if (txn instanceof TxnTypeAdmin) {
-            inputs.author = User.fromBuffer(
-                await context.store.keys.get(txn.getAuthorId())
-            );
-        } else if (txn instanceof TxnTypeUser) {
-            inputs.author = User.fromBuffer(
-                await context.store.keys.get(txn.getAuthorId())
-            );
-        }
-
         // poprawność transakcji
+
+        const inputs = await txn.verifyPrepareInputs(context);
 
         if (txn.verify(inputs)) {
             context.events.emit('node/txn/verify/accept', txn);
             return;
         }
 
-        context.events.emit('node/txn/verify/reject', txn);
+        context.events.emit('node/txn/verify/reject', txn, 4);
     });
 }

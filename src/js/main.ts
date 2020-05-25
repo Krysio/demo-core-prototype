@@ -19,7 +19,10 @@ import $, { JsonNode } from 'react-json-syntax';
 
 import Node from '@/models/node';
 import { createGenesisiForFastTest } from '@/factories/block';
-import { createAdmin } from '@/factories/txn';
+import {
+    createAdmin, createUser, createPublicUser,
+    removeUser
+} from '@/factories/txn';
 import { User, TYPE_USER_ROOT } from '@/models/user';
 
 const node = new Node();
@@ -32,23 +35,77 @@ console.log(
     user, User.fromBuffer(user.toBuffer())
 );
 node.takeBlock(genesis.blockGenesis);
-node.context.sync().then(() => {
-    const topBlock = node.getCurrentTopBlock();
+
+(async function(){
+    await node.context.sync();
+
+    let topBlock = node.getCurrentTopBlock();
 
     const txnCreateAdmin1 = createAdmin({
+        userId: 1,
         level: 1,
         targetBlockIndex: topBlock.getIndex(),
+        parentId: 0,
         parentPrivateKey: genesis.rootKey.privateKey
     });
     const txnCreateAdmin2 = createAdmin({
+        userId: 2,
         level: 1,
         targetBlockIndex: topBlock.getIndex(),
+        parentId: 0,
+        parentPrivateKey: genesis.rootKey.privateKey
+    });
+    const txnCreateUser1 = createUser({
+        userId: 100,
+        targetBlockIndex: topBlock.getIndex(),
+        parentId: 0,
+        parentPrivateKey: genesis.rootKey.privateKey,
+        timeEnd: Date.now() + 1e3 * 60 * 5,
+        timeStart: Date.now()
+    });
+    const txnCreateUser2 = createUser({
+        userId: 101,
+        targetBlockIndex: topBlock.getIndex(),
+        parentId: 0,
+        parentPrivateKey: genesis.rootKey.privateKey,
+        timeEnd: Date.now() + 1e3 * 60 * 5,
+        timeStart: Date.now()
+    });
+    const txnCreatePublicUser1 = createPublicUser({
+        userId: 200,
+        targetBlockIndex: topBlock.getIndex(),
+        parentId: 0,
         parentPrivateKey: genesis.rootKey.privateKey
     });
 
     node.takeTransaction(txnCreateAdmin1.txn);
     node.takeTransaction(txnCreateAdmin2.txn);
-});
+    node.takeTransaction(txnCreateUser1.txn);
+    node.takeTransaction(txnCreateUser2.txn);
+    node.takeTransaction(txnCreatePublicUser1.txn);
+
+    await new Promise((r) => setTimeout(r, 5e3));
+
+    topBlock = node.getCurrentTopBlock();
+
+    const txnCreateUser3 = createUser({
+        userId: 102,
+        targetBlockIndex: topBlock.getIndex(),
+        parentId: txnCreateAdmin1.id,
+        parentPrivateKey: txnCreateAdmin1.privateKey,
+        timeEnd: Date.now() + 1e3 * 60 * 5,
+        timeStart: Date.now()
+    });
+    const txnRemoveUser = removeUser({
+        userId: 2,
+        parentId: 0,
+        parentPrivateKey: genesis.rootKey.privateKey,
+        targetBlockIndex: topBlock.getIndex()
+    });
+
+    node.takeTransaction(txnCreateUser3.txn);
+    node.takeTransaction(txnRemoveUser.txn);
+})();
 
 /******************************/
 

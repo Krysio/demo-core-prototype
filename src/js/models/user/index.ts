@@ -21,6 +21,7 @@ const UserTypes = {
 type UserType = keyof typeof UserTypes;
 
 export class User {
+    constructor() {throw new Error();}
     static create<Key extends UserType, Type extends typeof UserTypes[Key]>(
         type: Key
     ) {

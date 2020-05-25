@@ -13,6 +13,13 @@ export class TxnSetConfig extends TxnTypeInternal {
 
     //#region logical
 
+    async verifyPrepareInputs(
+        context: Context,
+        block: Block
+    ) {
+        return { block };
+    }
+
     verify(inputs: {
         block?: Block
     } = EMPTY) {
@@ -29,15 +36,15 @@ export class TxnSetConfig extends TxnTypeInternal {
         return config.isValid();
     }
 
-    read(inputs: {
+    read(
         context: Context
-    }) {
+    ) {
         const data = this.getData('buffer');
 
         if (data !== null) {
             const config = Config.fromBuffer(data);
 
-            inputs.context.setConfig(config);
+            context.setConfig(config);
         }
     }
 

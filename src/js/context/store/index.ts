@@ -1,12 +1,12 @@
 import { Context } from "@/context";
-import createKeyStore from "./key";
+import createUserStore from "./user";
 import createBlockStore from "./block";
 
 /******************************/
 
 export default function(rawContext: unknown) {
     const context = rawContext as Context;
-    const keyStore = createKeyStore();
+    const userStore = createUserStore();
     const blockStore = createBlockStore();
 
     setTimeout(() => {
@@ -14,7 +14,7 @@ export default function(rawContext: unknown) {
     });
 
     return {
-        keys: keyStore,
+        user: userStore,
         blocks: blockStore
     };
 }
