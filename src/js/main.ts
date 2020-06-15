@@ -11,6 +11,10 @@ if (process.env.NODE_ENV === 'development') {
 
 /******************************/
 
+import * as dd from '@/models/test';
+
+console.log(dd);
+
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
 import $, { JsonNode } from 'react-json-syntax';
@@ -25,6 +29,7 @@ import {
 } from '@/factories/txn';
 import { User, TYPE_USER_ROOT } from '@/models/user';
 
+/*
 const node = new Node();
 const genesis = createGenesisiForFastTest();
 const user = User.create(TYPE_USER_ROOT);
@@ -108,7 +113,7 @@ node.takeBlock(genesis.blockGenesis);
 })();
 
 /******************************/
-
+/*
 import rNode from "@/view/Node";
 
 (function(){
@@ -116,8 +121,6 @@ import rNode from "@/view/Node";
 
     // view;
     const appView: React.ReactElement = $([rNode, { node }]);
-
-    /******************************/
 
     ReactDom.render(
         appView,

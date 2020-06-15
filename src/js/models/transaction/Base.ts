@@ -188,10 +188,33 @@ export abstract class TxnTypeAdmin extends TxnAny {
 export abstract class TxnTypeUser extends TxnAny {
     protected authorId = -1;
     protected signature = EmptyBuffer;
+    protected signingBlockHash = EmptyBuffer;
 
-    abstract getSigningBlockHash(): Buffer;
-    abstract setSigningBlockHash(value: Buffer): this;
+    getSigningBlockHash(): Buffer {
+        return this.signingBlockHash;
+    }
+    setSigningBlockHash(value: Buffer) {
+        this.signingBlockHash = value;
+        return this;
+    }
 
+    isValidAuthor(
+        author: UserAny | null
+    ) {
+        if (author === null) {
+            return false;
+        }
+
+        const type = author.getType();
+
+        if (type !== TYPE_USER_ROOT
+            && type !== TYPE_USER_ADMIN
+        ) {
+            return false;
+        }
+
+        return true;
+    }
 
     getAuthorId(): number;
     getAuthorId(format: 'buffer'): BufferWrapper;
@@ -215,7 +238,7 @@ export abstract class TxnTypeUser extends TxnAny {
     }
 
     getHash(signingBlockHash?: Buffer) {
-        if (this.getSigningBlockHash() < 0) {
+        if (this.getSigningBlockHash().length > 0) {
             if (!signingBlockHash) {
                 throw new Error();
             }
@@ -234,4 +257,39 @@ export abstract class TxnTypeUser extends TxnAny {
 
         return hash.get('buffer');
     }
+
+    //#region import-export buffer
+
+    getBufferStructure(
+        standalone = false
+    ) {
+        const buffData = this.getData('buffer');
+        const signature = this.getSignature();
+
+        return [
+            this.getType('buffer'),
+            BufferWrapper.numberToUleb128Buffer(buffData.length),
+            buffData,
+            standalone
+                ? this.getSigningBlockHash()
+                : EmptyBuffer,
+            this.getAuthorId('buffer'),
+            BufferWrapper.numberToUleb128Buffer(signature.length),
+            signature
+        ];
+    }
+
+    setDataFromBufferWrapper(
+        buff: BufferWrapper,
+        standalone = false
+    ) {
+        this.setData(buff.read(buff.readUleb128()));
+        if (standalone) {
+            this.setSigningBlockHash(buff.read(32 ));
+        }
+        this.setAuthorId(buff.readUleb128());
+        this.setSignature(buff.read(buff.readUleb128()));
+    }
+
+    //#endregion
 }

@@ -1,5 +1,5 @@
 
-
+//@ts-ignore
 export default class BufferWrapper extends Buffer {
     constructor(arg1: string, arg2?: BufferEncoding) {
         super(arg1, arg2);
@@ -163,12 +163,34 @@ export default class BufferWrapper extends Buffer {
 
     /***************************/
 
-    static concat(
-        list: Uint8Array[],
-        totalLength?: number
-    ) {
+    static concat(...args: Parameters<typeof Buffer.concat>) {
         return BufferWrapper.create(
-            super.concat(list, totalLength)
+            super.concat(...args)
+        );
+    }
+
+    slice(...args: Parameters<typeof Buffer.prototype.slice>) {
+        return BufferWrapper.create(
+            super.slice(...args)
+        );
+    }
+
+    static from(arrayBuffer: ArrayBuffer | SharedArrayBuffer, byteOffset?: number, length?: number): BufferWrapper;
+    static from(data: number[]): BufferWrapper;
+    static from(data: Uint8Array): BufferWrapper;
+    static from(obj: { valueOf(): string | object } | { [Symbol.toPrimitive](hint: 'string'): string }, byteOffset?: number, length?: number): BufferWrapper;
+    static from(str: string, encoding?: BufferEncoding): BufferWrapper;
+    static from(...args: any[]) {
+        return BufferWrapper.create(
+            //@ts-ignore
+            super.from(...args)
+        );
+    }
+
+    static alloc(...args: Parameters<typeof Buffer.alloc>) {
+        return BufferWrapper.create(
+            //@ts-ignore
+            super.alloc(...args)
         );
     }
 }
