@@ -88,10 +88,11 @@ export abstract class Base {
         return `${ this['__proto__'].constructor.name} [${this.value}]<${this.$cursorEnd},${this.$cursorEnd}>`;
     }
 }
+
 export abstract class BaseStructure extends Base {
     protected structureMap = {} as {[key: string]: Base};
     protected structureList = [] as Base[];
-    protected abstract schema = [];
+    protected abstract schema = {} as {[key: number]: Base};
     protected value = null;
 
     get(
@@ -149,12 +150,16 @@ export abstract class BaseStructure extends Base {
     readBuffer() {
         this.$cursorStart = this.buffer.cursor;
 
-        for (let [name, constructor] of this.schema) {
+        for (let key in this.schema) {
+            const constructor = this.schema[ key ];
+
             if (typeof constructor !== 'string') {
                 if (!!this.options.override === false) {
-                    constructor.create(this.buffer, name, this).setName(name);
+                    //@ts-ignore
+                    constructor.create(this.buffer, key, this).setName(key);
                 } else {
-                    constructor.create(this.buffer, name, this.getParent()).setName(name);
+                    //@ts-ignore
+                    constructor.create(this.buffer, key, this.getParent()).setName(key);
                 }
             }
         }

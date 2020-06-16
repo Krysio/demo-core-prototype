@@ -4,8 +4,9 @@ export * from "./typed";
 export * from "./Uleb128";
 export * from "./User";
 export * from "./Blob";
+export * from "./Hash";
+export * from "./Key";
 export * from "./Signature";
-export * from "./BlockHash";
 export * from "./Transaction";
 
 import { Uleb128 } from "./Uleb128";
