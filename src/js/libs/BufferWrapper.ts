@@ -39,9 +39,9 @@ export default class BufferWrapper extends Buffer {
     readUleb128(): number;
     readUleb128(format: 'buffer' | 'hex' | 'number' = 'number') {
         let length = 0;
-        while (this[ this.cursor + length ] & 0x80) length++;
-        length+= 1;
-        length-= Math.floor(length / 8);
+        while (this[this.cursor + length] & 0x80) length++;
+        length += 1;
+        length -= Math.floor(length / 8);
 
         const result = Buffer.alloc(length, 0);
 
@@ -53,40 +53,40 @@ export default class BufferWrapper extends Buffer {
             switch (i % 8) {
                 // [ i - 1 ] [ i ]
                 case 0: // [-] [0765 4321]
-                    result[ i ] = 0x7f & this[ j ];
+                    result[i] = 0x7f & this[j];
                     break;
                 case 1: // [1000 0000] [0076 5432]
-                    result[ i - 1 ]|= (0x01 & this[ j ]) << 7;
-                    result[ i ] = (0x7f & this[ j ]) >> 1;
+                    result[i - 1] |= (0x01 & this[j]) << 7;
+                    result[i] = (0x7f & this[j]) >> 1;
                     break;
                 case 2: // [2100 0000] [0007 6543]
-                    result[ i - 1 ]|= (0x03 & this[ j ]) << 6;
-                    result[ i ] = (0x7f & this[ j ]) >> 2;
+                    result[i - 1] |= (0x03 & this[j]) << 6;
+                    result[i] = (0x7f & this[j]) >> 2;
                     break;
                 case 3: // [3210 0000] [0000 7654]
-                    result[ i - 1 ]|= (0x07 & this[ j ]) << 5;
-                    result[ i ] = (0x7f & this[ j ]) >> 3;
+                    result[i - 1] |= (0x07 & this[j]) << 5;
+                    result[i] = (0x7f & this[j]) >> 3;
                     break;
                 case 4: // [4321 0000] [0000 0765]
-                    result[ i - 1 ]|= (0x0f & this[ j ]) << 4;
-                    result[ i ] = (0x7f & this[ j ]) >> 4;
+                    result[i - 1] |= (0x0f & this[j]) << 4;
+                    result[i] = (0x7f & this[j]) >> 4;
                     break;
                 case 5: // [5432 1000] [0000 0076]
-                    result[ i - 1 ]|= (0x1f & this[ j ]) << 3;
-                    result[ i ] = (0x7f & this[ j ]) >> 5;
+                    result[i - 1] |= (0x1f & this[j]) << 3;
+                    result[i] = (0x7f & this[j]) >> 5;
                     break;
                 case 6: // [6543 2100] [0000 0007]
-                    result[ i - 1 ]|= (0x3f & this[ j ]) << 2;
-                    result[ i ] = (0x7f & this[ j ]) >> 6;
+                    result[i - 1] |= (0x3f & this[j]) << 2;
+                    result[i] = (0x7f & this[j]) >> 6;
                     break;
                 case 7: // [7654 3210] [-]
-                    result[ i - 1 ]|= (0x7f & this[ j ]) << 1;
+                    result[i - 1] |= (0x7f & this[j]) << 1;
                     i--;
                     break;
             }
         }
 
-        this.cursor+= length;
+        this.cursor += length;
 
         switch (format) {
             case 'hex': return result.toString('hex');
@@ -102,7 +102,7 @@ export default class BufferWrapper extends Buffer {
             this.cursor + length
         );
 
-        this.cursor+= length;
+        this.cursor += length;
 
         return result;
     }
@@ -112,7 +112,7 @@ export default class BufferWrapper extends Buffer {
         const result = new Array(arrayLength) as Buffer[];
 
         for (let i = 0; i < arrayLength; i++) {
-            result[ i ] = this.read(this.readUleb128());
+            result[i] = this.read(this.readUleb128());
         }
 
         return result;
@@ -130,7 +130,7 @@ export default class BufferWrapper extends Buffer {
 
     static numberToUleb128Buffer(value: number) {
         if (value < 0) {
-            throw new Error('The value must be unsighed');
+            throw new Error('The value must be unsigned');
         }
 
         //@ts-ignore
@@ -140,7 +140,7 @@ export default class BufferWrapper extends Buffer {
 
         if (currentValue) {
             while (currentValue) {
-                result[ currentIndex ] = currentValue & 0x7f;
+                result[currentIndex] = currentValue & 0x7f;
 
                 if (currentValue <= 0xffffffff) {
                     currentValue = currentValue >>> 7;
@@ -149,7 +149,7 @@ export default class BufferWrapper extends Buffer {
                 }
 
                 if (currentValue) {
-                    result[ currentIndex ]|= 0x80;
+                    result[currentIndex] |= 0x80;
                 }
 
                 currentIndex++;

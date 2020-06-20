@@ -4,7 +4,7 @@ type BaseOptions = {
     override?: boolean
 };
 const EmptyOptions = {};
-const EmptyBuffer = BufferWrapper.alloc(0);
+const EmptyBuffer = BufferWrapper.alloc(0) as BufferWrapper;
 
 export abstract class Base {
     protected abstract value: any = null;
@@ -17,7 +17,7 @@ export abstract class Base {
 
     constructor(
         protected buffer: BufferWrapper
-    ) {}
+    ) { }
     abstract readBuffer(): this;
     abstract toBuffer(): Buffer;
 
@@ -54,7 +54,7 @@ export abstract class Base {
         return this;
     }
 
-    isValid() {return !this.invalid;}
+    isValid() { return !this.invalid; }
     setInvalid(value: boolean) {
         this.invalid = value;
     }
@@ -91,22 +91,22 @@ export abstract class Base {
         yield this as Base;
     }
 
-    [Symbol.for('nodejs.util.inspect.custom')]() {return this.inspect();}
+    [Symbol.for('nodejs.util.inspect.custom')]() { return this.inspect(); }
     inspect() {
-        return `${ this['__proto__'].constructor.name} [${this.value}]<${this.$cursorEnd},${this.$cursorEnd}>`;
+        return `${this['__proto__'].constructor.name} [${this.value}]<${this.$cursorEnd},${this.$cursorEnd}>`;
     }
 }
 
 export abstract class BaseStructure extends Base {
-    protected structureMap = {} as {[key: string]: Base};
+    protected structureMap = {} as { [key: string]: Base };
     protected structureList = [] as Base[];
-    protected abstract schema = {} as {[key: number]: Base};
+    protected abstract schema = {} as { [key: number]: Base };
     protected value = null;
 
     get(
         fieldKey: string
     ): Base {
-        const value = this.structureMap[ fieldKey ];
+        const value = this.structureMap[fieldKey];
 
         if (value === undefined) {
             const parent = this.getParent();
@@ -149,7 +149,7 @@ export abstract class BaseStructure extends Base {
         let result = 1;
 
         for (let filed of this.structureList) {
-            result&= filed.isValid() ? 1 : 0;
+            result &= filed.isValid() ? 1 : 0;
         }
 
         return result ? true : false;
@@ -159,7 +159,7 @@ export abstract class BaseStructure extends Base {
         this.$cursorStart = this.buffer.cursor;
 
         for (let key in this.schema) {
-            const constructor = this.schema[ key ];
+            const constructor = this.schema[key];
 
             if (typeof constructor !== 'string') {
                 if (!!this.options.override === false) {
@@ -184,7 +184,7 @@ export abstract class BaseStructure extends Base {
             );
         }
 
-        return Buffer.concat(bufferList);
+        return BufferWrapper.concat(bufferList);
     }
 
 
@@ -192,7 +192,7 @@ export abstract class BaseStructure extends Base {
         instance: Base,
         name = instance.getName()
     ) {
-        const oldValue = this.structureMap[ name ];
+        const oldValue = this.structureMap[name];
 
         if (oldValue !== undefined) {
             this.structureList.splice(
@@ -203,12 +203,12 @@ export abstract class BaseStructure extends Base {
         } else {
             this.structureList.push(instance);
         }
-        this.structureMap[ name ] = instance;
+        this.structureMap[name] = instance;
     }
 
     *[Symbol.iterator]() {
         for (let key in this.structureMap) {
-            yield this.structureMap[ key ];
+            yield this.structureMap[key];
         }
     }
 }
