@@ -6,7 +6,8 @@ export function defineTypes(
 ) {
     return class Type extends Base {
         protected value: number = -1;
-        protected structure: typeof BaseStructure;
+        protected structureConstructor: typeof BaseStructure = null;
+        protected structureInstance: BaseStructure = null;
 
         readBuffer() {
             if (this.buffer.cursor === -1) {
@@ -15,11 +16,11 @@ export function defineTypes(
 
             this.$cursorStart = this.buffer.cursor;
             this.value = this.buffer.readUleb128();
-            this.structure = variants[ this.value ];
+            this.structureConstructor = variants[ this.value ];
             this.$cursorEnd = this.buffer.cursor;
 
-            if (this.structure !== undefined) {
-                this.structure
+            if (this.structureConstructor !== undefined) {
+                this.structureInstance = this.structureConstructor
                     .create(
                         this.buffer,
                         '-',
@@ -29,8 +30,10 @@ export function defineTypes(
                         }
                     ) as BaseStructure;
 
-                Object.setPrototypeOf(this.getParent(), this.structure.prototype);
+                Object.setPrototypeOf(this.getParent(), this.structureConstructor.prototype);
             } else {
+                this.structureInstance = null;
+                this.structureConstructor = null;
                 this.getParent().setInvalid(true)
             }
 
@@ -45,10 +48,10 @@ export function defineTypes(
             newValue: number
         ) {
             this.value = newValue;
-            this.structure = variants[ newValue ];
+            this.structureConstructor = variants[ newValue ];
 
-            if (this.structure !== undefined) {
-                const additionalFileds = this.structure
+            if (this.structureConstructor !== undefined) {
+                const additionalFileds = this.structureConstructor
                     .create(
                         this.buffer,
                         '-',
@@ -58,7 +61,7 @@ export function defineTypes(
                         }
                     ) as BaseStructure;
 
-                Object.setPrototypeOf(this.getParent(), this.structure.prototype);
+                Object.setPrototypeOf(this.getParent(), this.structureConstructor.prototype);
             } else {
                 this.getParent().setInvalid(true)
             }

@@ -154,9 +154,9 @@ export class Block {
         for (let data of txnDataList) {
             const txt = Txn.fromBuffer(data);
 
-            if (txt.verify({ block: this }) === false) {
-                return false;
-            }
+            // if (txt.verify({ block: this }) === false) {
+            //     return false;
+            // }
         }
 
         return true;

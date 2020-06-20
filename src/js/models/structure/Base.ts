@@ -7,9 +7,9 @@ const EmptyOptions = {};
 const EmptyBuffer = BufferWrapper.alloc(0);
 
 export abstract class Base {
+    protected abstract value: any = null;
     protected $cursorStart: number = -1;
     protected $cursorEnd: number = -1;
-    protected abstract value: any;
     protected parent: BaseStructure | null = null;
     protected invalid = false;
     protected name: string | null = null;
@@ -37,6 +37,7 @@ export abstract class Base {
         this.value = newValue;
         return this;
     }
+
     getParent() {
         return this.parent;
     }
@@ -44,6 +45,7 @@ export abstract class Base {
         this.parent = ref;
         return this;
     }
+
     getName() {
         return this.name;
     }
@@ -51,10 +53,12 @@ export abstract class Base {
         this.name = value;
         return this;
     }
+
     isValid() {return !this.invalid;}
     setInvalid(value: boolean) {
         this.invalid = value;
     }
+
     setOptions(
         value: BaseOptions
     ) {
@@ -81,6 +85,10 @@ export abstract class Base {
         }
         // możliwe nadpisanie klasy przez pole 'type'
         return instance.readBuffer();
+    }
+
+    *[Symbol.iterator]() {
+        yield this as Base;
     }
 
     [Symbol.for('nodejs.util.inspect.custom')]() {return this.inspect();}
@@ -179,11 +187,6 @@ export abstract class BaseStructure extends Base {
         return Buffer.concat(bufferList);
     }
 
-    *[Symbol.iterator]() {
-        for (let item of this.structureList) {
-            yield item;
-        }
-    }
 
     setOrAddField(
         instance: Base,
@@ -201,5 +204,11 @@ export abstract class BaseStructure extends Base {
             this.structureList.push(instance);
         }
         this.structureMap[ name ] = instance;
+    }
+
+    *[Symbol.iterator]() {
+        for (let key in this.structureMap) {
+            yield this.structureMap[ key ];
+        }
     }
 }

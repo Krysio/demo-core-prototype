@@ -14,27 +14,46 @@ import { EMPTY_HASH } from "@/services/crypto/sha256";
 import { Key, TYPE_KEY_Secp256k1 } from "@/models/key";
 import { Hash } from "@/models/hash";
 import { UserRoot, UserAdmin, UserUser, UserPublic } from "@/models/user";
+import * as $ from "@/models/structure";
+import BufferWrapper from "@/libs/BufferWrapper";
 
 /******************************/
 
 export function createConfigForFastTest() {
     const config = configFactory.createForFastTest();
+
     const txn = Txn
     .create(TYPE_TXN_SET_CONFIG)
     .setData(config.toBuffer());
 
+    const transaction = $.TxnInternal.create()
+    .set('type', 2)
+    .set('data', BufferWrapper.create(config.toBuffer()));
+
     return {
+        transaction,
         txn,
         config
     };
 }
 export function createHashesForEmptyDb() {
-    return Txn
+    const txn = Txn
     .create(TYPE_TXN_DB_HASH_LIST)
     .setData([
-        //@ts-ignore
         [1, Hash.create({type:1, data: EMPTY_HASH})]
     ]);
+
+    const transaction = $.TxnInternal.create()
+    .set('type', 3)
+    .set('keys', $.Hash.create()
+        .set('type', 0)
+        .set('data', BufferWrapper.create(EMPTY_HASH))
+    );
+
+    return {
+        transaction,
+        txn
+    };
 }
 export function createRoot() {
     const [ privateKey, publicKey ] = secp256k1.getKeys();
@@ -51,7 +70,19 @@ export function createRoot() {
         )
     );
 
+    const transaction = $.TxnInternal.create()
+    .set('type', 1)
+    .set('data',
+        $.User.create()
+        .set('type', 0)
+        .set('key', $.Key.create()
+            .set('type', 0)
+            .set('data', BufferWrapper.create(publicKey))
+        )
+    );
+
     return {
+        transaction,
         txn,
         privateKey, publicKey
     };
@@ -199,24 +230,3 @@ export function removeUser(inputs: {
     };
 }
 
-export function createSampleDocument(inputs: {
-    authorId: number
-}) {
-    const txn = Txn
-    .create()
-    .setData(inputs.userId)
-    .setSigningBlockIndex(inputs.targetBlockIndex)
-    .setAuthorId(inputs.parentId);
-
-    const hash: Buffer = txn.getHash();
-    txn.setSignature(secp256k1.sign(
-        inputs.parentPrivateKey,
-        hash
-    ) as Buffer);
-
-    return {
-        id: inputs.userId,
-        txn,
-        hash
-    };
-}

@@ -65,11 +65,12 @@ export default function (refContext: unknown) {
 
     /******************************/
 
-    let intervalId: NodeJS.Timeout;
+    let intervalId: unknown;
     context.events.on('init', () => {
-        intervalId = setInterval(tick, 100);
+        intervalId = setInterval(tick, 100) as unknown;
     });
     context.events.on('destroy/before', () => {
+        //@ts-ignore
         clearInterval(intervalId);
     });
     context.events.once('node/topBlock/changed', () => {

@@ -45,6 +45,10 @@ export class User extends BaseStructure {
     }
     isAdmin() {
         const type = this.get("type").getValue() as number;
+        return type === TYPE_USER_ADMIN;
+    }
+    isAdminLike() {
+        const type = this.get("type").getValue() as number;
         return type === TYPE_USER_ROOT || type === TYPE_USER_ADMIN;
     }
     isUser() {
