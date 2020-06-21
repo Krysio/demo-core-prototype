@@ -1,6 +1,6 @@
 import { Context } from "@/context";
 import { Block } from "@/models/block";
-import { Txn } from "@/models/transaction";
+import { TxnInternal } from "@/models/structure/Transaction";
 
 /******************************/
 
@@ -8,11 +8,14 @@ export default function (rawContext: unknown) {
     const context = rawContext as Context;
 
     context.events.on('node/topBlock/changed', (block: Block) => {
-        // czytanie bloku
-        for (let txnBuffer of block.getBody()) {
-            const txn = Txn.fromBuffer(txnBuffer);
+        const body = block.getBody();
+        const txnCount = block.getCountOfTransactions();
+
+        for (let i = 0; i < txnCount; i++) {
+            const txn = TxnInternal.create(body) as TxnInternal;
+
             // czytanie każdej transakcji
-            txn.read(context);
+            txn.apply(context);
         }
     });
 }

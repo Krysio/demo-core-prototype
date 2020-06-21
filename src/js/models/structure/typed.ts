@@ -2,7 +2,7 @@ import BufferWrapper from "@/libs/BufferWrapper";
 import { Base, BaseStructure } from "./Base";
 
 export function defineTypes(
-    variants: {[key: number]: typeof BaseStructure}
+    variants: { [key: number]: typeof BaseStructure }
 ) {
     return class Type extends Base {
         protected value: number = -1;
@@ -16,7 +16,7 @@ export function defineTypes(
 
             this.$cursorStart = this.buffer.cursor;
             this.value = this.buffer.readUleb128();
-            this.structureConstructor = variants[ this.value ];
+            this.structureConstructor = variants[this.value];
             this.$cursorEnd = this.buffer.cursor;
 
             if (this.structureConstructor !== undefined) {
@@ -41,14 +41,19 @@ export function defineTypes(
         }
 
         toBuffer() {
-            return BufferWrapper.numberToUleb128Buffer(this.value);
+            try {
+                return BufferWrapper.numberToUleb128Buffer(this.value);
+            } catch (error) {
+                console.log(this);
+                throw error;
+            }
         }
 
         setValue(
             newValue: number
         ) {
             this.value = newValue;
-            this.structureConstructor = variants[ newValue ];
+            this.structureConstructor = variants[newValue];
 
             if (this.structureConstructor !== undefined) {
                 const additionalFileds = this.structureConstructor

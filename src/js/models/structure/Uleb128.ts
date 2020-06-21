@@ -18,7 +18,12 @@ export class Uleb128 extends Base {
     }
 
     toBuffer() {
-        return BufferWrapper.numberToUleb128Buffer(this.value);
+        try {
+            return BufferWrapper.numberToUleb128Buffer(this.value);
+        } catch (error) {
+            console.log(this);
+            throw error;
+        }
     }
 
     isValid() {

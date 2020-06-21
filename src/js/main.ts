@@ -11,8 +11,8 @@ if (process.env.NODE_ENV === 'development') {
 
 /******************************/
 
-import * as dd from '@/models/test';
-console.log(dd);
+// import * as dd from '@/models/test';
+// console.log(dd);
 
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
@@ -33,6 +33,10 @@ const node = new Node();
 const genesis = createGenesisiForFastTest();
 const user = User.create(TYPE_USER_ROOT);
 
+Object.assign(global, {
+    dev_node: node
+});
+
 user.setKey(genesis.rootKey.publicKey);
 console.log(
     node, genesis,
@@ -40,7 +44,7 @@ console.log(
 );
 node.takeBlock(genesis.blockGenesis);
 
-(async function(){
+(async function () {
     await node.context.sync();
 
     let topBlock = node.getCurrentTopBlock();
@@ -116,7 +120,7 @@ node.takeBlock(genesis.blockGenesis);
 
 import rNode from "@/view/Node";
 
-(function(){
+(function () {
     window.document.getElementById('loader').remove();
 
     // view;

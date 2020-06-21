@@ -15,6 +15,16 @@ export class Key extends BaseStructure {
                 protected schema = {
                     'data': Secp256k1
                 };
+
+                verify(
+                    hash: BufferWrapper,
+                    signature: BufferWrapper
+                ) {
+                    return secp256k1.verify(
+                        this.get('data').getValue() as BufferWrapper,
+                        hash, signature
+                    );
+                }
             }
         })
     };

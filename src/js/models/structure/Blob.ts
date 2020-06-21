@@ -7,6 +7,10 @@ export class Blob extends Base {
     protected value: BufferWrapper;
     protected size = 0;
 
+    getSize() {
+        return this.size;
+    }
+
     toBuffer() {
         return BufferWrapper.concat([
             BufferWrapper.numberToUleb128Buffer(this.value.length),

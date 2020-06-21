@@ -19,7 +19,9 @@ export abstract class Base {
         protected buffer: BufferWrapper
     ) { }
     abstract readBuffer(): this;
-    abstract toBuffer(): Buffer;
+    abstract toBuffer(): BufferWrapper;
+
+    init() { }
 
     get(fieldKey: string): Base {
         throw new Error();
@@ -84,7 +86,10 @@ export abstract class Base {
             }
         }
         // możliwe nadpisanie klasy przez pole 'type'
-        return instance.readBuffer();
+        instance.readBuffer();
+        instance.init();
+
+        return instance;
     }
 
     *[Symbol.iterator]() {
@@ -133,6 +138,7 @@ export abstract class BaseStructure extends Base {
              */
             if (newValue instanceof Base) {
                 if (!(newValue instanceof Object.getPrototypeOf(field).constructor)) {
+                    debugger;
                     throw new Error();
                 }
                 newValue.setName(fieldKey);
@@ -161,7 +167,7 @@ export abstract class BaseStructure extends Base {
         for (let key in this.schema) {
             const constructor = this.schema[key];
 
-            if (typeof constructor !== 'string') {
+            if (constructor instanceof Base) {
                 if (!!this.options.override === false) {
                     //@ts-ignore
                     constructor.create(this.buffer, key, this).setName(key);
@@ -169,6 +175,12 @@ export abstract class BaseStructure extends Base {
                     //@ts-ignore
                     constructor.create(this.buffer, key, this.getParent()).setName(key);
                 }
+            } else if (typeof constructor === 'object') {
+                //@ts-ignore
+                const instance = BaseStructure.create(this.buffer, key, this).setName(key);
+
+                Object.assign(instance, { shema: constructor });
+                instance.readBuffer();
             }
         }
 

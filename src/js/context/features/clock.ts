@@ -17,10 +17,9 @@ export default function (refContext: unknown) {
             let nextBlock = context.getTopBlockCandidate();
 
             if (nextBlock === null) {
-                nextBlock = Block.create({
-                    index: currentTopBlock.getIndex() + 1,
-                    previousHash: currentTopBlock.getHash()
-                });
+                nextBlock = Block.create() as Block;
+                nextBlock.setIndex(currentTopBlock.getIndex() + 1);
+                nextBlock.setPreviousBlockHash(currentTopBlock.getHash());
             }
 
             nextBlock.setTime(currentTopBlock.getTime() + config.getDiscreteBlockPeriod());
@@ -29,15 +28,13 @@ export default function (refContext: unknown) {
             context.topBlock.current = nextBlock;
             context.storeBlock(nextBlock);
 
-            const nextCandidate = Block.create({
-                index: nextBlock.getIndex() + 1,
-                previousHash: nextBlock.getHash()
-            });
+            const nextCandidate = Block.create();
+
+            nextBlock.setIndex(nextBlock.getIndex() + 1);
+            nextBlock.setPreviousBlockHash(nextBlock.getHash());
             context.insertWaitingTransactionsToBlock(nextCandidate);
 
             context.topBlock.candidate = nextCandidate;
-
-            setTimeout(afterPushBlockChain);
         }
     }
     function afterPushBlockChain() {
@@ -48,6 +45,7 @@ export default function (refContext: unknown) {
 
     // sprzwdza czy nie jesteśmy w tyle z wytworzeniem bloku
     function tick() {
+        console.log('tick');
         if (context.hasTopBlock() === true) {
             const currentTopBlock = context.getTopBlock();
             const currentIndex = context.getCurrentBlockIndex();
@@ -55,7 +53,7 @@ export default function (refContext: unknown) {
             if (currentIndex > currentTopBlock.getIndex()) {
                 syncPromise.reset();
                 syncLock = true;
-                pushBlockChain();
+                setTimeout(() => pushBlockChain(), 0);
             } else if (syncLock === true) {
                 syncLock = false;
                 syncPromise.resolve();
