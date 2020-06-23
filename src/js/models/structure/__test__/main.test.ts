@@ -8,9 +8,8 @@ const buffTxn = `14 10  01 02 03  00 ${publicKey.toString('hex')}  17 33  04 11 
 
 /******************************/
 
-interface StructureElementType<T> {}
 
-abstract class Base<T> implements StructureElementType<T> {
+abstract class Base<T> {
     protected value: T;
     protected parent: Base<{}> = null;
 
@@ -40,7 +39,7 @@ abstract class Base<T> implements StructureElementType<T> {
 
 /******************************/
 
-class Uleb128 extends Base<number> implements StructureElementType<number> {
+class Uleb128 extends Base<number> {
     protected value = -1;
 
     public fromBuffer(buffer: BufferWrapper) {
@@ -60,7 +59,8 @@ class Uleb128 extends Base<number> implements StructureElementType<number> {
 function structure<
     S extends { [Key in keyof S]: S[Key] }
 >(schema: S) {
-    return class Structure extends Base<S> implements StructureElementType<S> {
+    return class Structure extends Base<S> {
+        static schema = schema;
         protected value = null;
         protected structure = {} as { [Key in keyof S]: InstanceType<S[Key]> };
 
@@ -145,11 +145,11 @@ function typedStructure<
         [KeyType in Extract<keyof S["type"], number>]: {
             [SubKey in keyof S["type"][KeyType]]: S["type"][KeyType][SubKey]
         }
-    } } = {"type": {}}
+    } }
 >(schema: S) {
     return class TypedStructure<
         T extends Extract<keyof S["type"], number>
-    > extends structure(schema) implements StructureElementType<S> {
+    > extends structure(schema) {
         protected type = new Uleb128();
         protected substructure = {} as { [Key in keyof S["type"][T]]: InstanceType<S["type"][T][Key]> };
 
@@ -237,8 +237,62 @@ const d = b.get('id');
 const e = b.get('position');
 const D = B.get('points');
 const S = B.setValue('type', 2);
-const Z = S.get('');
 
+function typed2<
+    S extends { [Key in keyof S]: S[Key] } & { "type": {
+        [KeyType in Extract<keyof S["type"], number>]: S["type"][KeyType]
+    } }
+>(schema: S) {
+    return class TypedStructure<
+        T extends Extract<keyof S["type"], number>
+    > extends structure(schema) {
+        protected type = new Uleb128();
+        protected substructure = {} as { [Key in keyof S["type"][T]]: InstanceType<S["type"][T][Key]> };
+
+        public test<
+            SK extends Exclude<keyof S, 'type'>,
+            ST extends S['type'][T],
+            SS extends ST[Exclude<keyof ST, "prototype">],
+            K extends SK | keyof SS,
+            R extends
+                K extends keyof SS ? SS[K] :
+                K extends SK ? S[K] :
+                never,
+            //@ts-ignore
+            RS extends InstanceType<R>
+        >(
+            key: K
+        ) {
+            return {
+                d: null as SS,
+                keys: null as K,
+                r: null as R,
+                st: null as ST,
+                i: null as RS
+            };
+        }
+    }
+}
+
+const aa = typed2({
+    'id': Coord,
+    'type': {
+        1: structure({
+            'points': Uleb128
+        }),
+        2: class TEST extends structure({
+            'position': Coord
+        }) {
+            tttt() {
+                return 'oooo';
+            }
+        }
+    }
+});
+const bb = new aa<2>();
+const cc = bb.test('position');
+const dd = cc.i;
+cc.i.getValue('x')
 
 type TypeMap = typeof typeMap;
 class Structure {
