@@ -13,10 +13,10 @@ export class Block extends BaseStructure {
   };
 
   init() {
-    this.set('version', 0);
-    this.set('index', 0);
-    this.set('transactionCount', 0);
-    this.set('previousBlockHash', EMPTY_BLOCK_HASH);
+    this.setValue('version', 0);
+    this.setValue('index', 0);
+    this.setValue('transactionCount', 0);
+    this.setValue('previousBlockHash', EMPTY_BLOCK_HASH);
   }
 
   getHash() {
@@ -31,36 +31,37 @@ export class Block extends BaseStructure {
     return BufferWrapper.create(hash.get());
   }
 
-  getIndex() { return this.get('index').getValue() as number }
-  setIndex(value: number) { this.get('index').setValue(value); return this; }
-  getTime() { return this.get('time').getValue() as number }
-  setTime(value: number) { this.get('time').setValue(value); return this; }
-  getPreviousBlockHash() { return this.get('previousBlockHash').getValue() as BufferWrapper }
-  setPreviousBlockHash(value: BufferWrapper) { this.get('previousBlockHash').setValue(value); return this; }
-  getCountOfTransactions() { return this.get('transactionCount').getValue() as number }
-  getBody() { return this.get('body').getValue() as BufferWrapper }
+  getIndex() { return this.getValue('index') as number }
+  setIndex(value: number) { this.setValue('index', value); return this; }
+  getTime() { return this.getValue('time') as number }
+  setTime(value: number) { this.setValue('time', value); return this; }
+  getPreviousBlockHash() { return this.getValue('previousBlockHash') as BufferWrapper }
+  setPreviousBlockHash(value: BufferWrapper) { this.setValue('previousBlockHash', value); return this; }
+  getCountOfTransactions() { return this.getValue('transactionCount') as number }
+  getBody() { return this.getValue('body') as BufferWrapper }
 
   insertTransaction(
     txn: BufferWrapper
   ) {
     this.get('body').setValue(
       BufferWrapper.concat([
-        this.get('body').getValue(),
+        this.getValue('body'),
         txn
       ])
     );
 
     this.set(
       'transactionCount',
-      this.get('transactionCount').getValue() + 1
+      this.getValue('transactionCount') + 1
     );
   }
 
   static create(buffer?: BufferWrapper) {
-    return super.create(buffer) as Block;
+    //@ts-ignore
+    return new Block(buffer);
   }
   static fromBuffer(buffer: Buffer) {
-    return new Block(BufferWrapper.create(buffer));
+    return Block.create().fromBuffer(BufferWrapper.create(buffer));
   }
 
   verify() {

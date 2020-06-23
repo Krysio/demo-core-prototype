@@ -1,5 +1,6 @@
 import BufferWrapper from "@/libs/BufferWrapper";
 import { Base, BaseStructure } from "./Base";
+import $$ from "./";
 
 export function defineTypes(
     variants: { [key: number]: typeof BaseStructure }
@@ -9,7 +10,7 @@ export function defineTypes(
         protected structureConstructor: typeof BaseStructure = null;
         protected structureInstance: BaseStructure = null;
 
-        readBuffer() {
+        fromBuffer() {
             if (this.buffer.cursor === -1) {
                 return this;
             }
@@ -20,15 +21,13 @@ export function defineTypes(
             this.$cursorEnd = this.buffer.cursor;
 
             if (this.structureConstructor !== undefined) {
-                this.structureInstance = this.structureConstructor
-                    .create(
-                        this.buffer,
-                        '-',
-                        this.getParent(),
-                        {
-                            override: true
-                        }
-                    ) as BaseStructure;
+                this.structureInstance = $$
+                    .create(this.structureConstructor)
+                    .fromBuffer(this.buffer) as BaseStructure;
+
+                for (let subField of this.structureInstance) {
+                    this.getParent().set(subField.getName(), subField, true);
+                }
 
                 Object.setPrototypeOf(this.getParent(), this.structureConstructor.prototype);
             } else {
@@ -56,17 +55,27 @@ export function defineTypes(
             this.structureConstructor = variants[newValue];
 
             if (this.structureConstructor !== undefined) {
-                const additionalFileds = this.structureConstructor
-                    .create(
-                        this.buffer,
-                        '-',
-                        this.getParent(),
-                        {
-                            override: true
-                        }
-                    ) as BaseStructure;
+                this.structureInstance = $$.create(this.structureConstructor) as BaseStructure;
 
-                Object.setPrototypeOf(this.getParent(), this.structureConstructor.prototype);
+                const parent = this.getParent();
+                const parentSchema = parent["originalSchema"] as BaseStructure["schema"];
+                const newSchema = {} as BaseStructure["schema"];
+
+                for (let key in parentSchema) {
+                    const constructor = parentSchema[ key ];
+
+                    newSchema[ key ] = constructor;
+
+                    //@ts-ignore
+                    if (constructor === Type) {
+                        Object.assign(newSchema, this.structureInstance["schema"]);
+                    }
+                }
+
+                for (let subField of this.structureInstance) {
+                    this.getParent().set(subField.getName(), subField, true);
+                }
+
             } else {
                 this.getParent().setInvalid(true)
             }

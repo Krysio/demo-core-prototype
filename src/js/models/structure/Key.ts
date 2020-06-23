@@ -37,7 +37,7 @@ export class Secp256k1 extends Base {
         return this.value;
     }
 
-    readBuffer() {
+    fromBuffer() {
         this.$cursorStart = this.buffer.cursor;
         this.value = this.buffer.read(33);
         this.$cursorEnd = this.buffer.cursor;

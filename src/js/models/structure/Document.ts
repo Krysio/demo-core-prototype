@@ -37,7 +37,7 @@ type FileType =
 
 /******************************/
 
-export class Focument extends BaseStructure {
+export class Document extends BaseStructure {
     protected schema = {
         'authorId': Uleb128,
         'timeEnd': Uleb128,

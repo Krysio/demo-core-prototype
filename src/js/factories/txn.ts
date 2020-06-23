@@ -1,31 +1,17 @@
-import {
-    Txn,
-    TYPE_TXN_INSERT_KEY_ROOT,
-    TYPE_TXN_SET_CONFIG,
-    TYPE_TXN_DB_HASH_LIST,
-    TYPE_TXN_INSERT_KEY_ADMIN,
-    TYPE_TXN_INSERT_KEY_USER,
-    TYPE_TXN_INSERT_KEY_PUBLIC,
-    TYPE_TXN_REMOVE_KEY_USER
-} from "@/models/transaction";
 import * as configFactory from "@/factories/config";
 import * as secp256k1 from "@/services/crypto/ec/secp256k1";
 import { EMPTY_HASH } from "@/services/crypto/sha256";
-import { Key, TYPE_KEY_Secp256k1 } from "@/models/key";
-import { Hash } from "@/models/hash";
-import { UserRoot, UserAdmin, UserUser, UserPublic } from "@/models/user";
-import * as $ from "@/models/structure";
+import $$, * as $ from "@/models/structure";
 import BufferWrapper from "@/libs/BufferWrapper";
-import { TxnStandalone, TYPE_USER_ADMIN } from "@/models/structure";
 
 /******************************/
 
 export function createConfigForFastTest() {
     const config = configFactory.createForFastTest();
 
-    const transaction = $.TxnInternal.create()
-        .set('type', 2)
-        .set('data', BufferWrapper.create(config.toBuffer()));
+    const transaction = $$.create('TxnInternal')
+        .setValue('type', $.TYPE_TXN_SET_CONFIG)
+        .setValue('data', BufferWrapper.create(config.toBuffer()));
 
     return {
         transaction,
@@ -33,12 +19,12 @@ export function createConfigForFastTest() {
     };
 }
 export function createHashesForEmptyDb() {
-    const transaction = $.TxnInternal.create()
-        .set('type', 3)
-        .set('data', $.BaseStructure.create()
-            .set('keys', $.Hash.create()
-                .set('type', 0)
-                .set('data', BufferWrapper.create(EMPTY_HASH))
+    const transaction = $$.create('TxnInternal')
+        .setValue('type', $.TYPE_TXN_HASH_LIST)
+        .set('data', $$.create('HashList')
+            .set('keys', $$.create('Hash')
+                .setValue('type', $.TYPE_HASH_Sha256)
+                .setValue('data', BufferWrapper.create(EMPTY_HASH))
             )
         );
 
@@ -48,14 +34,13 @@ export function createHashesForEmptyDb() {
 }
 export function createRoot() {
     const [privateKey, publicKey] = secp256k1.getKeys();
-    const transaction = $.TxnInternal.create()
-        .set('type', 1)
-        .set('data',
-            $.User.create()
-                .set('type', 0)
-                .set('key', $.Key.create()
-                    .set('type', 0)
-                    .set('data', BufferWrapper.create(publicKey))
+    const transaction = $$.create('TxnInternal')
+        .setValue('type', $.TYPE_TXN_INSERT_ROOT_USER)
+        .set('data', $$.create('User')
+                .setValue('type', $.TYPE_USER_ROOT)
+                .set('key', $$.create('Key')
+                    .setValue('type', $.TYPE_KEY_Secp256k1)
+                    .setValue('data', BufferWrapper.create(publicKey))
                 )
         );
 
@@ -74,25 +59,27 @@ export function createAdmin(inputs: {
 }) {
     const [privateKey, publicKey] = secp256k1.getKeys();
 
-    const transaction = $.TxnStandalone.create() as $.TxnStandalone;
+    const transaction = $$.create('TxnStandalone');
 
-    transaction.set('type', TYPE_TXN_INSERT_KEY_ADMIN);
+    transaction.setValue('type', $.TYPE_TXN_INSERT_USER_ADMIN);
     transaction.set('data',
-        $.User.create()
-            .set('type', TYPE_USER_ADMIN)
-            .set('key', $.Key.create()
-                .set('type', 0)
-                .set('data', BufferWrapper.create(publicKey))
-            ));
-    transaction.set('signingBlockIndex', inputs.targetBlockIndex);
-    transaction.set('author', inputs.parentId);
+        $$.create('User')
+            .setValue('type', $.TYPE_USER_ADMIN)
+            .set('key', $$.create('Key')
+                .setValue('type', $.TYPE_KEY_Secp256k1)
+                .setValue('data', BufferWrapper.create(publicKey))
+            )
+            .setValue('userId', inputs.userId)
+    );
+    transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
+    transaction.setValue('author', inputs.parentId);
 
     const hash: Buffer = transaction.getHash();
-    transaction.set('signature', $.Signature.create()
+    transaction.set('signature', $$.create('Signature')
         .setValue(secp256k1.sign(
             inputs.parentPrivateKey,
             hash
-        ) as Buffer)
+        ) as BufferWrapper)
     );
 
     return {
@@ -112,33 +99,34 @@ export function createUser(inputs: {
     userId: number
 }) {
     const [privateKey, publicKey] = secp256k1.getKeys();
+    const transaction = $$.create('TxnStandalone');
 
-    const txn = Txn
-        .create(TYPE_TXN_INSERT_KEY_USER)
-        .setData(
-            (new UserUser())
-                .setKey(
-                    Key.create({
-                        type: TYPE_KEY_Secp256k1,
-                        data: publicKey
-                    })
-                )
-                .setUserId(inputs.userId)
-                .setTimeStart(inputs.timeStart)
-                .setTimeEnd(inputs.timeEnd)
-        )
-        .setSigningBlockIndex(inputs.targetBlockIndex)
-        .setAuthorId(inputs.parentId);
+    transaction.setValue('type', $.TYPE_TXN_INSERT_USER_USER);
+    transaction.set('data',
+        $$.create('User')
+            .setValue('type', $.TYPE_USER_USER)
+            .set('key', $$.create('Key')
+                .setValue('type', $.TYPE_KEY_Secp256k1)
+                .setValue('data', BufferWrapper.create(publicKey))
+            )
+            .setValue('userId', inputs.userId)
+            .setValue('timeStart', inputs.timeStart)
+            .setValue('timeEnd', inputs.timeEnd)
+    );
+    transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
+    transaction.setValue('author', inputs.parentId);
 
-    const hash: Buffer = txn.getHash();
-    txn.setSignature(secp256k1.sign(
-        inputs.parentPrivateKey,
-        hash
-    ) as Buffer);
+    const hash: Buffer = transaction.getHash();
+    transaction.set('signature', $$.create('Signature')
+        .setValue(secp256k1.sign(
+            inputs.parentPrivateKey,
+            hash
+        ) as BufferWrapper)
+    );
 
     return {
         id: inputs.userId,
-        txn,
+        transaction,
         hash,
         privateKey, publicKey
     };
@@ -151,31 +139,32 @@ export function createPublicUser(inputs: {
     userId: number
 }) {
     const [privateKey, publicKey] = secp256k1.getKeys();
+    const transaction = $$.create('TxnStandalone');
 
-    const txn = Txn
-        .create(TYPE_TXN_INSERT_KEY_PUBLIC)
-        .setData(
-            (new UserPublic())
-                .setKey(
-                    Key.create({
-                        type: TYPE_KEY_Secp256k1,
-                        data: publicKey
-                    })
-                )
-                .setUserId(inputs.userId)
-        )
-        .setSigningBlockIndex(inputs.targetBlockIndex)
-        .setAuthorId(inputs.parentId);
+    transaction.setValue('type', $.TYPE_TXN_INSERT_USER_PUBLIC);
+    transaction.set('data',
+        $$.create('User')
+            .setValue('type', $.TYPE_USER_PUBLIC)
+            .set('key', $$.create('Key')
+                .setValue('type', $.TYPE_KEY_Secp256k1)
+                .setValue('data', BufferWrapper.create(publicKey))
+            )
+            .setValue('userId', inputs.userId)
+    );
+    transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
+    transaction.setValue('author', inputs.parentId);
 
-    const hash: Buffer = txn.getHash();
-    txn.setSignature(secp256k1.sign(
-        inputs.parentPrivateKey,
-        hash
-    ) as Buffer);
+    const hash: Buffer = transaction.getHash();
+    transaction.set('signature', $$.create('Signature')
+        .setValue(secp256k1.sign(
+            inputs.parentPrivateKey,
+            hash
+        ) as BufferWrapper)
+    );
 
     return {
         id: inputs.userId,
-        txn,
+        transaction,
         hash,
         privateKey, publicKey
     };
@@ -187,21 +176,24 @@ export function removeUser(inputs: {
     targetBlockIndex: number,
     userId: number
 }) {
-    const txn = Txn
-        .create(TYPE_TXN_REMOVE_KEY_USER)
-        .setData(inputs.userId)
-        .setSigningBlockIndex(inputs.targetBlockIndex)
-        .setAuthorId(inputs.parentId);
+    const transaction = $$.create('TxnStandalone');
 
-    const hash: Buffer = txn.getHash();
-    txn.setSignature(secp256k1.sign(
-        inputs.parentPrivateKey,
-        hash
-    ) as Buffer);
+    transaction.setValue('type', $.TYPE_TXN_REMOVE_USER);
+    transaction.setValue('data', inputs.userId)
+    transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
+    transaction.setValue('author', inputs.parentId);
+
+    const hash: Buffer = transaction.getHash();
+    transaction.set('signature', $$.create('Signature')
+        .setValue(secp256k1.sign(
+            inputs.parentPrivateKey,
+            hash
+        ) as BufferWrapper)
+    );
 
     return {
         id: inputs.userId,
-        txn,
+        transaction,
         hash
     };
 }

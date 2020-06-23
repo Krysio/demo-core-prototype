@@ -12,9 +12,9 @@ export function createGenesisiForFastTest() {
     const blockGenesis = Block.create() as Block;
 
     blockGenesis
-        .set('version', 0x00)
-        .set('index', 0x00)
-        .set('time', Time.now());
+        .setValue('version', 0x00)
+        .setValue('index', 0x00)
+        .setValue('time', Time.now());
 
     blockGenesis.insertTransaction(txnRootKey.toBuffer());
     blockGenesis.insertTransaction(txnConfig.toBuffer());

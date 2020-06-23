@@ -1,10 +1,11 @@
 import BufferWrapper from "@/libs/BufferWrapper";
+import { EMPTY_HASH } from "@/services/crypto/sha256";
 import { Base } from "@/models/structure";
 
 /******************************/
 
 export class BlockHash extends Base {
-    protected value: BufferWrapper;
+    protected value: BufferWrapper = BufferWrapper.create(EMPTY_HASH);
 
     toBuffer() {
         return BufferWrapper.concat([
@@ -13,7 +14,7 @@ export class BlockHash extends Base {
         ]);
     }
 
-    readBuffer() {
+    fromBuffer() {
         this.$cursorStart = this.buffer.cursor;
 
         this.value = this.buffer.read(32);

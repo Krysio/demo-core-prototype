@@ -11,14 +11,14 @@ if (process.env.NODE_ENV === 'development') {
 
 /******************************/
 
-// import * as dd from '@/models/test';
-// console.log(dd);
+import * as dd from '@/models/test';
+console.log(dd);
 
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
 import $, { JsonNode } from 'react-json-syntax';
 
-/******************************/
+/****************************** /
 
 import Node from '@/models/node';
 import { createGenesisiForFastTest } from '@/factories/block';
@@ -87,11 +87,11 @@ node.takeBlock(genesis.blockGenesis);
         parentPrivateKey: genesis.rootKey.privateKey
     });
 
-    node.takeTransaction(txnCreateAdmin1.txn);
-    node.takeTransaction(txnCreateAdmin2.txn);
-    node.takeTransaction(txnCreateUser1.txn);
-    node.takeTransaction(txnCreateUser2.txn);
-    node.takeTransaction(txnCreatePublicUser1.txn);
+    node.takeTransaction(txnCreateAdmin1.transaction);
+    node.takeTransaction(txnCreateAdmin2.transaction);
+    node.takeTransaction(txnCreateUser1.transaction);
+    node.takeTransaction(txnCreateUser2.transaction);
+    node.takeTransaction(txnCreatePublicUser1.transaction);
 
     await new Promise((r) => setTimeout(r, 5e3));
 
@@ -112,11 +112,11 @@ node.takeBlock(genesis.blockGenesis);
         targetBlockIndex: topBlock.getIndex()
     });
 
-    node.takeTransaction(txnCreateUser3.txn);
-    node.takeTransaction(txnRemoveUser.txn);
+    node.takeTransaction(txnCreateUser3.transaction);
+    node.takeTransaction(txnRemoveUser.transaction);
 })();
 
-/******************************/
+//#region React
 
 import rNode from "@/view/Node";
 
@@ -132,4 +132,6 @@ import rNode from "@/view/Node";
     );
 })();
 
-/******************************/
+//#endregion
+
+//*/

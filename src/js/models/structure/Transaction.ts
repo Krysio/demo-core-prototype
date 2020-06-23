@@ -13,6 +13,18 @@ import { TYPE_KEY_Secp256k1 } from "./Key";
 import { HashSum } from "@/services/crypto/sha256";
 import BufferWrapper from "@/libs/BufferWrapper";
 import { Block } from "../block";
+import { TYPE_TXN_INSERT_KEY_ADMIN } from "../transaction";
+
+/******************************/
+
+export const TYPE_TXN_INSERT_ROOT_USER = 1;
+export const TYPE_TXN_SET_CONFIG = 2;
+export const TYPE_TXN_HASH_LIST = 3;
+export const TYPE_TXN_INSERT_USER_ADMIN = 16;
+export const TYPE_TXN_INSERT_USER_USER = 17;
+export const TYPE_TXN_INSERT_USER_PUBLIC = 18;
+export const TYPE_TXN_REMOVE_USER = 19;
+export const TYPE_TXN_INSERT_DOCUMENT = 48;
 
 /******************************/
 
@@ -24,7 +36,7 @@ const Internal = {
 export class TxnInternal extends BaseStructure {
     protected schema = {
         'type': defineTypes({
-            1: class TxnInsertRootUser extends TxnInternal {
+            [TYPE_TXN_INSERT_ROOT_USER]: class TxnInsertRootUser extends TxnInternal {
                 protected schema = {
                     'data': User
                 };
@@ -34,7 +46,7 @@ export class TxnInternal extends BaseStructure {
                     return user.isRoot() && super.isValid();
                 }
             },
-            2: class TxnSetConfig extends TxnInternal {
+            [TYPE_TXN_SET_CONFIG]: class TxnSetConfig extends TxnInternal {
                 protected schema = {
                     'data': Blob
                 };
@@ -54,7 +66,7 @@ export class TxnInternal extends BaseStructure {
                     context.setConfig(config);
                 }
             },
-            3: class TxnDbHashList extends TxnInternal {
+            [TYPE_TXN_HASH_LIST]: class TxnDbHashList extends TxnInternal {
                 protected schema = {
                     'data': {
                         'keys': Hash
@@ -63,7 +75,7 @@ export class TxnInternal extends BaseStructure {
             },
 
             //#region insert user
-            16: class TxnInsertKeyAdmin extends TxnInternal {
+            [TYPE_TXN_INSERT_USER_ADMIN]: class TxnInsertKeyAdmin extends TxnInternal {
                 protected schema = {
                     'data': User,
                     ...Internal
@@ -136,7 +148,7 @@ export class TxnInternal extends BaseStructure {
                     }
                 }
             },
-            17: class TxnInsertKeyAdmin extends TxnInternal {
+            [TYPE_TXN_INSERT_USER_USER]: class TxnInsertKeyAdmin extends TxnInternal {
                 protected schema = {
                     'data': User,
                     ...Internal
@@ -147,7 +159,7 @@ export class TxnInternal extends BaseStructure {
                     return user.isUser() && super.isValid();
                 }
             },
-            18: class TxnInsertKeyAdmin extends TxnInternal {
+            [TYPE_TXN_INSERT_USER_PUBLIC]: class TxnInsertKeyAdmin extends TxnInternal {
                 protected schema = {
                     'data': User,
                     ...Internal
@@ -160,7 +172,7 @@ export class TxnInternal extends BaseStructure {
             },
             //#endregion
             //#region remove user
-            19: class TxnRemoveUser extends TxnInternal {
+            [TYPE_TXN_REMOVE_USER]: class TxnRemoveUser extends TxnInternal {
                 protected schema = {
                     'data': Uleb128,
                     ...Internal
@@ -245,7 +257,7 @@ abstract class TxnInsertUserBase extends BaseTxnStandaloneFromAdmin {
     }
 
     public getInsertingUser() {
-        return this.get('data') as User;
+        return this.get('data') as unknown as User;
     }
 }
 
@@ -255,19 +267,19 @@ export class TxnStandalone extends BaseTxnStandalone {
         'type': defineTypes({
 
             //#region insert user
-            16: class TxnInsertUserAdmin extends TxnInsertUserBase {
+            [TYPE_TXN_INSERT_USER_ADMIN]: class TxnInsertUserAdmin extends TxnInsertUserBase {
                 isValid() {
                     const user = this.getInsertingUser();
                     return user.isAdmin() && super.isValid();
                 }
             },
-            17: class TxnInsertUserUser extends TxnInsertUserBase {
+            [TYPE_TXN_INSERT_USER_USER]: class TxnInsertUserUser extends TxnInsertUserBase {
                 isValid() {
                     const user = this.getInsertingUser();
                     return user.isUser() && super.isValid();
                 }
             },
-            18: class TxnInsertUserPublic extends TxnInsertUserBase {
+            [TYPE_TXN_INSERT_USER_PUBLIC]: class TxnInsertUserPublic extends TxnInsertUserBase {
                 isValid() {
                     const user = this.getInsertingUser();
                     return user.isPublic() && super.isValid();
@@ -276,7 +288,7 @@ export class TxnStandalone extends BaseTxnStandalone {
             //#endregion
 
             //#region remove user
-            19: class TxnRemoveUser extends BaseTxnStandaloneFromAdmin {
+            [TYPE_TXN_REMOVE_USER]: class TxnRemoveUser extends BaseTxnStandaloneFromAdmin {
                 protected schema = {
                     'data': Uleb128,
                     ...BaseTxnStandaloneFromAdmin.schemaSuffix
@@ -284,7 +296,7 @@ export class TxnStandalone extends BaseTxnStandalone {
             },
             //#endregion
 
-            48: class TxnInsertDocument extends BaseTxnStandaloneFromUser {
+            [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends BaseTxnStandaloneFromUser {
                 protected schema = {
                     'data': 'Document',
                     ...BaseTxnStandaloneFromUser.schemaSuffix

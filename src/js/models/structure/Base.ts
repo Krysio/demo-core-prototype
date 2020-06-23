@@ -7,6 +7,7 @@ const EmptyOptions = {};
 const EmptyBuffer = BufferWrapper.alloc(0) as BufferWrapper;
 
 export abstract class Base {
+    protected originalPrototype = typeof Base;
     protected abstract value: any = null;
     protected $cursorStart: number = -1;
     protected $cursorEnd: number = -1;
@@ -14,14 +15,16 @@ export abstract class Base {
     protected invalid = false;
     protected name: string | null = null;
     protected options: BaseOptions = {};
+    protected buffer: BufferWrapper;
 
-    constructor(
-        protected buffer: BufferWrapper
-    ) { }
-    abstract readBuffer(): this;
+    abstract fromBuffer(buffer: BufferWrapper): this;
     abstract toBuffer(): BufferWrapper;
 
-    init() { }
+    constructor() {
+        this.originalPrototype = Object.getPrototypeOf(this);
+    }
+
+    init(): void {};
 
     get(fieldKey: string): Base {
         throw new Error();
@@ -30,11 +33,12 @@ export abstract class Base {
         throw new Error();
     }
 
-    getValue() {
+    getValue(arg1?: any) {
         return this.value;
     }
     setValue(
-        newValue: any
+        newValue: any,
+        arg2?: any
     ) {
         this.value = newValue;
         return this;
@@ -68,30 +72,6 @@ export abstract class Base {
         return this;
     }
 
-    static create(
-        buffer: BufferWrapper = EmptyBuffer,
-        name: string = '',
-        parent: BaseStructure = null,
-        options: BaseOptions = EmptyOptions
-    ) {
-        //@ts-ignore
-        const instance: Base = new this(buffer);
-
-        instance.setName(name);
-        instance.setOptions(options);
-        if (parent !== null) {
-            instance.setParent(parent);
-            if (!!instance.options.override === false) {
-                parent.setOrAddField(instance);
-            }
-        }
-        // możliwe nadpisanie klasy przez pole 'type'
-        instance.readBuffer();
-        instance.init();
-
-        return instance;
-    }
-
     *[Symbol.iterator]() {
         yield this as Base;
     }
@@ -103,15 +83,31 @@ export abstract class Base {
 }
 
 export abstract class BaseStructure extends Base {
-    protected structureMap = {} as { [key: string]: Base };
-    protected structureList = [] as Base[];
+    protected structure = {} as { [key: string]: Base };
     protected abstract schema = {} as { [key: number]: Base };
+    protected orignalSchema: BaseStructure["schema"];
     protected value = null;
 
-    get(
+    constructor() {
+        super();
+        //@ts-ignore
+        this.orignalSchema = this.schema;
+    }
+
+    init() {
+        for (let key in this.schema) {
+            const constructor = this.schema[ key ];
+            //@ts-ignore
+            const field = new constructor();
+
+            this.set(key, field);
+        }
+    }
+
+    public get(
         fieldKey: string
     ): Base {
-        const value = this.structureMap[fieldKey];
+        const value = this.structure[fieldKey];
 
         if (value === undefined) {
             const parent = this.getParent();
@@ -126,26 +122,51 @@ export abstract class BaseStructure extends Base {
         return value;
     }
 
-    set(
-        fieldKey: string,
-        newValue: any
-    ): this {
-        const field = this.get(fieldKey);
+    //@ts-ignore
+    public set(
+        key: string,
+        value: Base,
+        special = false
+    ) {
+        const field = this.get(key);
+
+        if (!this.schema[ key ]
+            || !(value instanceof Object.getPrototypeOf(this.schema[ key ]))
+        ) {
+            debugger;
+            throw new Error();
+        }
+        value.setName(key);
+        if (special === false) {
+            value.setParent(this);
+        }
+        this.structure[ key ] = value;
+
+        return this;
+    }
+
+    //@ts-ignore
+    public getValue(
+        key: string
+    ) {
+        const field = this.get(key);
 
         if (field !== undefined) {
-            /**
-             * Wstawiając podstrukture, pole zostanie zamienione
-             */
-            if (newValue instanceof Base) {
-                if (!(newValue instanceof Object.getPrototypeOf(field).constructor)) {
-                    debugger;
-                    throw new Error();
-                }
-                newValue.setName(fieldKey);
-                this.setOrAddField(newValue, fieldKey);
-            } else {
-                field.setValue(newValue);
-            }
+            return field.getValue();
+        }
+
+        return null;
+    }
+
+    //@ts-ignore
+    public setValue(
+        key: string,
+        value: any
+    ): this {
+        const field = this.get(key);
+
+        if (field !== undefined) {
+            field.setValue(value);
         }
 
         return this;
@@ -154,14 +175,19 @@ export abstract class BaseStructure extends Base {
     isValid() {
         let result = 1;
 
-        for (let filed of this.structureList) {
-            result &= filed.isValid() ? 1 : 0;
+        for (let key in this.structure) {
+            const field = this.structure[ key ];
+
+            result &= field.isValid() ? 1 : 0;
         }
 
         return result ? true : false;
     }
 
-    readBuffer() {
+    fromBuffer(
+        buffer: BufferWrapper
+    ) {
+        this.buffer = buffer;
         this.$cursorStart = this.buffer.cursor;
 
         for (let key in this.schema) {
@@ -190,37 +216,20 @@ export abstract class BaseStructure extends Base {
     toBuffer() {
         const bufferList = [] as Buffer[];
 
-        for (let item of this.structureList) {
+        for (let key in this.structure) {
+            const field = this.structure[ key ];
+
             bufferList.push(
-                item.toBuffer()
+                field.toBuffer()
             );
         }
 
         return BufferWrapper.concat(bufferList);
     }
 
-
-    setOrAddField(
-        instance: Base,
-        name = instance.getName()
-    ) {
-        const oldValue = this.structureMap[name];
-
-        if (oldValue !== undefined) {
-            this.structureList.splice(
-                this.structureList.indexOf(oldValue),
-                1,
-                instance
-            );
-        } else {
-            this.structureList.push(instance);
-        }
-        this.structureMap[name] = instance;
-    }
-
     *[Symbol.iterator]() {
-        for (let key in this.structureMap) {
-            yield this.structureMap[key];
+        for (let key in this.structure) {
+            yield this.structure[ key ];
         }
     }
 }
