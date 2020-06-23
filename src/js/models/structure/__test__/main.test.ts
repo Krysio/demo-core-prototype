@@ -8,7 +8,9 @@ const buffTxn = `14 10  01 02 03  00 ${publicKey.toString('hex')}  17 33  04 11 
 
 /******************************/
 
-abstract class Base<T> {
+interface StructureElementType<T> {}
+
+abstract class Base<T> implements StructureElementType<T> {
     protected value: T;
     protected parent: Base<{}> = null;
 
@@ -19,6 +21,9 @@ abstract class Base<T> {
     public getValue() {
         return this.value;
     }
+
+    public get(): never {throw new Error()};
+    public set(): never {throw new Error};
 
     public fromBuffer(buffer: BufferWrapper): this {throw new Error()};
     public toBuffer(): BufferWrapper {throw new Error};
@@ -35,7 +40,7 @@ abstract class Base<T> {
 
 /******************************/
 
-class Uleb128 extends Base<number> {
+class Uleb128 extends Base<number> implements StructureElementType<number> {
     protected value = -1;
 
     public fromBuffer(buffer: BufferWrapper) {
@@ -52,89 +57,82 @@ class Uleb128 extends Base<number> {
 
 /******************************/
 
-function structure<S extends {[Key in keyof S]: new () => Base<any>}>(schema: S) {
-    class Structure<
-        K extends Extract<keyof S, string>,
-        T extends S[K],
-        V extends T extends new (...args: any) => Base<infer R> ? R : any
-    > extends Base<any> {
+function structure<S extends { [Key in keyof S]: S[Key] }>(schema: S) {
+    class Structure extends Base<S> implements StructureElementType<S>{
         protected value = null;
-        protected structure = {} as { [Key in K]: Base<V> };
-
+        protected structure = {} as { [Key in keyof S]: InstanceType<S[Key]> };
+        
+        init() {
+            this.initFields();
+        }
+        initFields() {
+            for (let key in schema) {
+                const constructor = schema[key];
+                //@ts-ignore
+                this.set(key, new constructor())
+            }
+        }
+        
         //@ts-ignore
-        getValue(
+        getValue<
+            K extends Extract<keyof S, string>,
+            V extends S[K] extends new (...args: any) => Base<infer R> ? R : any
+        >(
             key: K
         ) {
-            const field = this.get(key);
-
-            return field.getValue() as V;
+            //@ts-ignore
+            return this.get(key).getValue() as V;
         }
         //@ts-ignore
-        setValue(key: K, value: V) {
-            const field = this.get(key) as T & Base<unknown>;
-
-            field.setValue(value);
-
+        setValue<
+            K extends Extract<keyof S, string>,
+            V extends S[K] extends new (...args: any) => Base<infer R> ? R : any
+        >(
+            key: K,
+            value: V
+        ) {
+            //@ts-ignore
+            this.get(key).setValue(value);
             return this;
         }
-
-        public get(
+        //@ts-ignore
+        public get<
+            K extends Extract<keyof S, string>
+        >(
             key: K
-        ) {
-            const value = this.structure[ key ];
-
-            return value as InstanceType<T>;
+        ): InstanceType<S[K]> {
+            return this.structure[ key ];
         }
-
-        public init() {
-            for (let key in schema) {
-                const constructor = schema[ key ];
-                const field = new constructor();
-
-                this.set(key as K, field);
-            }
-        }
-        public set(
+        //@ts-ignore
+        public set<
+            K extends Extract<keyof S, string>
+        >(
             key: K,
-            value: Base<V>
+            value: S[K]
         ) {
-            const field = this.get(key);
-
-            if (!schema[ key ]
-                || !(
-                    value
-                    instanceof
-                    Object.getPrototypeOf(schema[ key ])
-                )
-            ) {
-                debugger;
-                throw new Error();
-            }
-
-            this.structure[ key as number ] = value;
-
+            this.structure[ key ] = value;
             return this;
         }
 
         toBuffer() {
             const arrayOfBuff = [] as BufferWrapper[];
-
+    
             for (let key in this.structure) {
-                const field = this.get(key as K) as T & Base<unknown>;
+                const field = this.get(key) as Base<unknown>;
                 arrayOfBuff.push(field.toBuffer());
             }
             return BufferWrapper.concat(arrayOfBuff);
         }
-
+    
         fromBuffer(buffer: BufferWrapper) {
             const arrayOfBuff = [] as BufferWrapper[];
-
+    
             for (let key in this.structure) {
-                const field = this.get(key as K) as T &  Base<unknown>;
-
+                const field = this.get(key) as Base<unknown>;
+    
                 field.fromBuffer(buffer);
             }
-
+    
             return this;
         }
     }
@@ -142,15 +140,11 @@ function structure<S extends {[Key in keyof S]: new () => Base<any>}>(schema: S)
     return Structure;
 }
 
+/******************************/
+
 const Coord = structure({
     'x': Uleb128,
     'y': Uleb128
-});
-
-const Village = structure({
-    'id': Uleb128,
-    //@ts-ignore
-    'coord': Coord
 });
 
 const typeMap = {
