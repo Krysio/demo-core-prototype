@@ -21,12 +21,12 @@ abstract class Base<T> {
         return this.value;
     }
 
-    public get(): never {throw new Error()};
-    public set(): never {throw new Error};
+    public get(): never { throw new Error() };
+    public set(): never { throw new Error };
 
-    public fromBuffer(buffer: BufferWrapper): this {throw new Error()};
-    public toBuffer(): BufferWrapper {throw new Error};
-    public init() {}
+    public fromBuffer(buffer: BufferWrapper): this { throw new Error() };
+    public toBuffer(): BufferWrapper { throw new Error };
+    public init() { }
 
     getParent() {
         return this.parent;
@@ -103,7 +103,7 @@ function structure<
         >(
             key: K
         ): InstanceType<S[K]> {
-            return this.structure[ key ];
+            return this.structure[key];
         }
         //@ts-ignore redefine
         public set<
@@ -112,7 +112,7 @@ function structure<
             key: K,
             value: S[K]
         ) {
-            this.structure[ key ] = value;
+            this.structure[key] = value;
             return this;
         }
 
@@ -141,15 +141,17 @@ function structure<
 }
 
 function typedStructure<
-    S extends { [Key in keyof S]: S[Key] } & { "type": {
-        [KeyType in Extract<keyof S["type"], number>]: {
-            [SubKey in keyof S["type"][KeyType]]: S["type"][KeyType][SubKey]
+    S extends { [Key in keyof S]: S[Key] } & {
+        "type": {
+            [KeyType in Extract<keyof S["type"], number>]: {
+                [SubKey in keyof S["type"][KeyType]]: S["type"][KeyType][SubKey]
+            }
         }
-    } }
+    }
 >(schema: S) {
     return class TypedStructure<
         T extends Extract<keyof S["type"], number>
-    > extends structure(schema) {
+        > extends structure(schema) {
         protected type = new Uleb128();
         protected substructure = {} as { [Key in keyof S["type"][T]]: InstanceType<S["type"][T][Key]> };
 
@@ -170,10 +172,10 @@ function typedStructure<
                 return this.type;
             }
             if (this.structure.hasOwnProperty(key)) {
-                return this.structure[ key ];
+                return this.structure[key];
             }
             if (this.substructure.hasOwnProperty(key)) {
-                return this.substructure[ key ];
+                return this.substructure[key];
             }
         }
 
@@ -186,9 +188,9 @@ function typedStructure<
             K extends (Exclude<keyof S, 'type'> | keyof S["type"][T]),
             V extends (
                 K extends Exclude<keyof S, 'type'>
-                    ? S[K] extends new (...args: any) => Base<infer R> ? R : any :
+                ? S[K] extends new (...args: any) => Base<infer R> ? R : any :
                 K extends keyof S["type"][T]
-                    ? S["type"][T] extends new (...args: any) => Base<infer R> ? R : any :
+                ? S["type"][T] extends new (...args: any) => Base<infer R> ? R : any :
                 never
             )
         >(
@@ -239,37 +241,69 @@ const D = B.get('points');
 const S = B.setValue('type', 2);
 
 function typed2<
-    S extends { [Key in keyof S]: S[Key] } & { "type": {
-        [KeyType in Extract<keyof S["type"], number>]: S["type"][KeyType]
-    } }
+    S extends { [Key in keyof S]: S[Key] } & {
+        "type": {
+            [KeyType in Extract<keyof S["type"], number>]: S["type"][KeyType]
+        }
+    }
 >(schema: S) {
+    type Keys = Exclude<keyof S, 'type'>;
+
     return class TypedStructure<
         T extends Extract<keyof S["type"], number>
-    > extends structure(schema) {
+        > extends structure(schema) {
         protected type = new Uleb128();
-        protected substructure = {} as { [Key in keyof S["type"][T]]: InstanceType<S["type"][T][Key]> };
+        //@ts-ignore
+        protected substructure = null as InstanceType<S["type"][T]>;
 
         public test<
-            SK extends Exclude<keyof S, 'type'>,
-            ST extends S['type'][T],
-            SS extends ST[Exclude<keyof ST, "prototype">],
-            K extends SK | keyof SS,
-            R extends
-                K extends keyof SS ? SS[K] :
-                K extends SK ? S[K] :
-                never,
+            SubClass extends S['type'][T],
+            SubStructure extends SubClass[Exclude<keyof SubClass, "prototype">],
+            Key extends Keys | keyof SubStructure,
+            SubType extends
+            Key extends keyof SubStructure ? SubStructure[Key] :
+            Key extends Keys ? S[Key] :
+            never,
             //@ts-ignore
-            RS extends InstanceType<R>
+            RS extends InstanceType<SubType>
         >(
-            key: K
+            key: Key
         ) {
             return {
-                d: null as SS,
-                keys: null as K,
-                r: null as R,
-                st: null as ST,
+                d: null as SubStructure,
+                keys: null as Key,
+                r: null as SubType,
+                st: null as SubClass,
                 i: null as RS
             };
+        }
+
+        //@ts-ignore redefine
+        public get<
+            SubClass extends S['type'][T],
+            SubStructure extends SubClass[Exclude<keyof SubClass, "prototype">],
+            Key extends keyof S | keyof SubStructure,
+            SubType extends
+            Key extends 'type' ? typeof Uleb128 :
+            Key extends keyof SubStructure ? SubStructure[Key] :
+            Key extends Keys ? S[Key] :
+            never
+        >(
+            key: Key
+        ):
+            //@ts-ignore
+            InstanceType<SubType> {
+            if (key === 'type') {
+                //@ts-ignore
+                return this.type;
+            }
+            if (this.structure.hasOwnProperty(key)) {
+                return this.structure[key];
+            }
+            if (this.substructure.hasOwnProperty(key)) {
+                //@ts-ignore
+                return this.substructure.get(key);
+            }
         }
     }
 }
@@ -290,6 +324,7 @@ const aa = typed2({
     }
 });
 const bb = new aa<2>();
+const ba = bb.get('type');
 const cc = bb.test('position');
 const dd = cc.i;
 cc.i.getValue('x')
