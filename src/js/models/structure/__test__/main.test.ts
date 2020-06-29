@@ -12,6 +12,7 @@ const buffTxn = `14 10  01 02 03  00 ${publicKey.toString('hex')}  17 33  04 11 
 abstract class Base<T> {
     protected value: T;
     protected parent: Base<{}> = null;
+    protected $prototype = Object.getPrototypeOf(this);
 
     public setValue(value: T) {
         this.value = value;
@@ -26,7 +27,7 @@ abstract class Base<T> {
 
     public fromBuffer(buffer: BufferWrapper): this { throw new Error() };
     public toBuffer(): BufferWrapper { throw new Error };
-    public init() { }
+    public init() {return this;}
 
     getParent() {
         return this.parent;
@@ -63,9 +64,11 @@ function structure<
         static schema = schema;
         protected value = null;
         protected structure = {} as { [Key in keyof S]: InstanceType<S[Key]> };
+        protected $prototypeStructure = Structure.prototype;
 
         init() {
             this.initFields();
+            return this;
         }
         initFields() {
             for (let key in schema) {
@@ -137,74 +140,9 @@ function structure<
 
             return this;
         }
-    }
-}
 
-function typedStructure<
-    S extends { [Key in keyof S]: S[Key] } & {
-        "type": {
-            [KeyType in Extract<keyof S["type"], number>]: {
-                [SubKey in keyof S["type"][KeyType]]: S["type"][KeyType][SubKey]
-            }
-        }
-    }
->(schema: S) {
-    return class TypedStructure<
-        T extends Extract<keyof S["type"], number>
-        > extends structure(schema) {
-        protected type = new Uleb128();
-        protected substructure = {} as { [Key in keyof S["type"][T]]: InstanceType<S["type"][T][Key]> };
-
-        //@ts-ignore redefine
-        public get(key: 'type'): Uleb128;
-        //@ts-ignore redefine
-        public get<
-            K extends (Exclude<keyof S, 'type'> | keyof S["type"][T])
-        >(
-            key: K
-        ):
-            K extends Exclude<keyof S, 'type'> ? InstanceType<S[K]> :
-            K extends keyof S["type"][T] ? InstanceType<S["type"][T][K]> :
-            never;
-        //@ts-ignore redefine
-        public get(key) {
-            if (key === 'type') {
-                return this.type;
-            }
-            if (this.structure.hasOwnProperty(key)) {
-                return this.structure[key];
-            }
-            if (this.substructure.hasOwnProperty(key)) {
-                return this.substructure[key];
-            }
-        }
-
-        public setValue<
-            V extends Extract<keyof S["type"], number>
-        >(
-            key: 'type', value: V
-        ): TypedStructure<V>;
-        public setValue<
-            K extends (Exclude<keyof S, 'type'> | keyof S["type"][T]),
-            V extends (
-                K extends Exclude<keyof S, 'type'>
-                ? S[K] extends new (...args: any) => Base<infer R> ? R : any :
-                K extends keyof S["type"][T]
-                ? S["type"][T] extends new (...args: any) => Base<infer R> ? R : any :
-                never
-            )
-        >(
-            key: K,
-            value: V
-        ): this;
-        public setValue(key, value): this {
-            if (key === 'type') {
-                this.type.setValue(value);
-                //TODO rebulid structure
-                //@ts-ignore
-            }
-            this.get(key).setValue(value);
-            return this;
+        getKeys() {
+            return Object.keys(this.structure);
         }
     }
 }
@@ -216,31 +154,8 @@ const Coord = structure({
     'y': Uleb128
 });
 
-const typeMap = {
-    Uleb128,
-    Coord
-};
-
-const A = typedStructure({
-    'id': Coord,
-    'type': {
-        1: {
-            'points': Uleb128
-        },
-        2: {
-            'position': Coord
-        }
-    }
-});
-const b = new A<2>();
-const B = new A<1>();
-const c = b.get('type');
-const d = b.get('id');
-const e = b.get('position');
-const D = B.get('points');
-const S = B.setValue('type', 2);
-
-function typed2<
+type ExtractValueType<T> = T extends new (...args: any) => Base<infer R> ? R : any;
+function typedStructure<
     S extends { [Key in keyof S]: S[Key] } & {
         "type": {
             [KeyType in Extract<keyof S["type"], number>]: S["type"][KeyType]
@@ -248,35 +163,66 @@ function typed2<
     }
 >(schema: S) {
     type Keys = Exclude<keyof S, 'type'>;
+    type ValueTypes = keyof S['type'];
 
     return class TypedStructure<
-        T extends Extract<keyof S["type"], number>
-        > extends structure(schema) {
-        protected type = new Uleb128();
+        //@ts-ignore
+        T extends keyof S['type'] = 0
+    > extends structure(schema) {
+        static types: keyof S['type'];
         //@ts-ignore
         protected substructure = null as InstanceType<S["type"][T]>;
 
-        public test<
-            SubClass extends S['type'][T],
-            SubStructure extends SubClass[Exclude<keyof SubClass, "prototype">],
-            Key extends Keys | keyof SubStructure,
-            SubType extends
-            Key extends keyof SubStructure ? SubStructure[Key] :
-            Key extends Keys ? S[Key] :
-            never,
-            //@ts-ignore
-            RS extends InstanceType<SubType>
-        >(
-            key: Key
-        ) {
-            return {
-                d: null as SubStructure,
-                keys: null as Key,
-                r: null as SubType,
-                st: null as SubClass,
-                i: null as RS
-            };
+        //#region init
+
+        init() {
+            this.initFields();
+            return this;
         }
+        initFields() {
+            const previousStructure = { ...this.structure };
+
+            //@ts-ignore
+            this.structure = {};
+
+            for (let key in schema) {
+                const constructor = schema[ key ];
+                let instance: typeof schema[Keys];
+    
+                if (key === 'type') {
+                    if (previousStructure[ key ]) {
+                        instance = previousStructure[ key ];
+                    } else {
+                        //@ts-ignore
+                        instance = new Uleb128();
+                    }
+                    this.set(key, instance);
+                    if (this.substructure !== null) {
+                        //@ts-ignore
+                        for (let fieldKey of this.substructure.getKeys()) {
+                            this.set(
+                                fieldKey,
+                                //@ts-ignore
+                                this.substructure.get(fieldKey)
+                            );
+                        }
+                    }
+                    continue;
+                } else {
+                    if (previousStructure[ key ]) {
+                        instance = previousStructure[ key ];
+                    } else {
+                        //@ts-ignore
+                        instance = new constructor();
+                    }
+                }
+
+                this.set(key, instance);
+            }
+        }
+
+        //#endregion
+        //#region get
 
         //@ts-ignore redefine
         public get<
@@ -284,51 +230,186 @@ function typed2<
             SubStructure extends SubClass[Exclude<keyof SubClass, "prototype">],
             Key extends keyof S | keyof SubStructure,
             SubType extends
-            Key extends 'type' ? typeof Uleb128 :
-            Key extends keyof SubStructure ? SubStructure[Key] :
-            Key extends Keys ? S[Key] :
-            never
+                Key extends 'type' ? typeof Uleb128 :
+                Key extends keyof SubStructure ? SubStructure[Key] :
+                Key extends Keys ? S[Key] :
+                never
         >(
             key: Key
         ):
-            //@ts-ignore
-            InstanceType<SubType> {
-            if (key === 'type') {
+            InstanceType<
                 //@ts-ignore
-                return this.type;
-            }
+                SubType
+            >
+        {
             if (this.structure.hasOwnProperty(key)) {
+                //@ts-ignore
                 return this.structure[key];
             }
-            if (this.substructure.hasOwnProperty(key)) {
+            if (this.substructure
+                && this.substructure.hasOwnProperty(key)
+            ) {
                 //@ts-ignore
                 return this.substructure.get(key);
             }
+
+            throw new Error(`TODO ${key} ${this.getValue('type')}`);
         }
+
+        //#endregion
+        //#region set
+
+        //@ts-ignore redefine
+        public set<
+            SubClass extends S['type'][T],
+            SubStructure extends SubClass[Exclude<keyof SubClass, "prototype">],
+            Key extends keyof S | keyof SubStructure,
+            SubType extends
+                Key extends 'type' ? typeof Uleb128 :
+                Key extends keyof SubStructure ? SubStructure[Key] :
+                Key extends Keys ? S[Key] :
+                never
+        >(
+            key: Key,
+            value: InstanceType<
+                //@ts-ignore
+                SubType
+            >
+        ): TypedStructure<T>
+        {
+            this.structure[ key ] = value;
+            //@ts-ignore
+            value.setParent(this);
+
+            return this;
+        }
+
+        //#endregion
+        //#region setValue
+
+        //@ts-ignore redefine
+        public setValue<
+            V extends Extract<keyof S['type'], number>
+        >(
+            key: 'type',
+            value: V
+        ): TypedStructure<V>;
+
+        //@ts-ignore redefine
+        public setValue<
+            K extends Exclude<keyof S, 'type'>,
+            V extends ExtractValueType<S[K]>
+        >(
+            key: K,
+            value: V
+        ): this;
+
+        //@ts-ignore redefine
+        public setValue<
+            K extends keyof S['type'][T][Exclude<keyof S['type'][T], "prototype">],
+            V extends ExtractValueType<S['type'][T][Exclude<keyof S['type'][T], "prototype">][K]>
+        >(
+            key: K,
+            value: V
+        ): this;
+            
+        //@ts-ignore redefine
+        public setValue(
+            key,
+            value
+        ) {
+            if (key === 'type') {
+                //@ts-ignore
+                this.structure["type"].setValue(value);
+
+                //@ts-ignore
+                this.substructure = new schema['type'][ value ]();
+
+                let substructurePrototype;
+
+                if (!schema['type'][ value ]['$prototypeSubstructure']) {
+                    substructurePrototype = Object.getPrototypeOf(this.substructure);
+
+                    while (this.substructure['$prototypeStructure'] !== Object.getPrototypeOf(substructurePrototype)) {
+                        substructurePrototype = Object.getPrototypeOf(substructurePrototype);
+                    }
+        
+                    schema['type'][ value ]['$prototypeSubstructure'] = substructurePrototype;
+                } else {
+                    substructurePrototype = schema['type'][ value ]['$prototypeSubstructure'];
+                    Object.setPrototypeOf(substructurePrototype, this.substructure['$prototypeStructure']);
+                }
+
+                //@ts-ignore
+                this.substructure.setParent(this);
+                //@ts-ignore
+                this.substructure.init();
+                this.initFields();
+
+                //@ts-ignore
+                const newPrototype = substructurePrototype;
+
+                Object.setPrototypeOf(newPrototype, this.$prototype);
+                Object.setPrototypeOf(this, newPrototype);
+
+                // ((obj) => {
+                //     const chain = [];
+                //     let prot = Object.getPrototypeOf(obj);
+    
+                //     while (prot !== null) {
+                //         chain.push(prot.constructor.name);
+                //         prot = Object.getPrototypeOf(prot);
+                //     }
+    
+                //     console.log(chain);
+                // })(this);
+
+                return this;
+            }
+
+            //@ts-ignore
+            this.get(key).setValue(value);
+
+            return this;
+        }
+
+        //#endregion
+        //#region getValue
+
+        //@ts-ignore redefine
+        public getValue<
+            SubClass extends S['type'][T],
+            SubStructure extends SubClass[Exclude<keyof SubClass, "prototype">],
+            Key extends keyof S | keyof SubStructure,
+            SubType extends
+                Key extends keyof SubStructure ? SubStructure[Key] :
+                Key extends Keys ? S[Key] :
+                never,
+            ValueType extends
+                ExtractValueType<SubType>
+        >(
+            key: Key
+        ) {
+            if (this.structure.hasOwnProperty(key)) {
+                //@ts-ignore
+                return this.structure[key].getValue() as ValueType;
+            }
+            if (this.substructure
+                && this.substructure.hasOwnProperty(key)
+            ) {
+                //@ts-ignore
+                return this.substructure.get(key).getValue() as ValueType;
+            }
+        }
+
+        //#endregion
     }
 }
 
-const aa = typed2({
-    'id': Coord,
-    'type': {
-        1: structure({
-            'points': Uleb128
-        }),
-        2: class TEST extends structure({
-            'position': Coord
-        }) {
-            tttt() {
-                return 'oooo';
-            }
-        }
-    }
-});
-const bb = new aa<2>();
-const ba = bb.get('type');
-const cc = bb.test('position');
-const dd = cc.i;
-cc.i.getValue('x')
-
+const typeMap = {
+    Uleb128,
+    Coord
+};
 type TypeMap = typeof typeMap;
 class Structure {
     static create<Key extends keyof typeof typeMap, Type extends TypeMap[Key]>(key: Key) {
@@ -385,11 +466,6 @@ describe('main', () => {
             expect(value1).toBe(x);
             expect(value2).toBe(y);
 
-            console.log(
-                element1.toBuffer().toString('hex'),
-                buffer.toString('hex')
-            );
-
             expect(Buffer.compare(
                 element1.toBuffer(),
                 buffer
@@ -403,6 +479,71 @@ describe('main', () => {
                 buffer
             )).toBe(0);
         }
+    });
+});
+describe('type', () => {
+    const StructureA = class A extends structure({
+        'a': Uleb128
+    }) {
+        test() {return 'A';}
+    };
+    const StructureB = class B extends structure({
+        'b': Uleb128
+    }) {
+        test() {return 'B';}
+    };
+    const Typed = class Typed extends typedStructure({
+        'id': Uleb128,
+        'type': {
+            1: StructureA,
+            2: StructureB
+        }
+    }) {
+        base() {
+            return 'X';
+        }
+    };
+
+    it('create', () => {
+        const instance = new Typed().init();
+
+        expect(instance instanceof Typed).toBe(true);
+        expect(instance.get('type') instanceof Uleb128).toBe(true);
+        expect(instance.get('type').getValue()).toBe(-1);
+    });
+    it('setType', () => {
+        const instance = new Typed().init();
+        const instance1 = instance.setValue('type', 1);
+
+        expect(instance1.get('type').getValue()).toBe(1);
+        expect(instance1.get('a').getValue()).toBe(-1);
+
+        instance1.setValue('a', 3);
+
+        expect(instance1.get('a').getValue()).toBe(3);
+
+        const instance2 = instance1.setValue('type', 2);
+        
+        expect(instance2.get('type').getValue()).toBe(2);
+        expect(instance2.get('b').getValue()).toBe(-1);
+
+        //console.log(instance2);
+    });
+    it('pomirfizm', () => {
+        const instance = new Typed().init();
+        const instance1 = instance.setValue('type', 1);
+
+        //@ts-ignore
+        expect(instance1.test()).toBe('A');
+        //@ts-ignore
+        expect(instance1.base()).toBe('X');
+
+        const instance2 = instance1.setValue('type', 2);
+        
+        //@ts-ignore
+        expect(instance2.test()).toBe('B');
+        //@ts-ignore
+        expect(instance2.base()).toBe('X');
     });
 });
 
