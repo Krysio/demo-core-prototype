@@ -38,25 +38,6 @@ abstract class Base<T> {
     }
 }
 
-/******************************/
-
-class Uleb128 extends Base<number> {
-    protected value = -1;
-
-    public fromBuffer(buffer: BufferWrapper) {
-        this.value = buffer.readUleb128();
-        return this;
-    }
-    public toBuffer() {
-        return BufferWrapper.numberToUleb128Buffer(this.value);
-    }
-    public isValid() {
-        return this.value > -1;
-    }
-}
-
-/******************************/
-
 function structure<
     S extends { [Key in keyof S]: S[Key] }
 >(schema: S) {
@@ -147,13 +128,6 @@ function structure<
     }
 }
 
-/******************************/
-
-const Coord = structure({
-    'x': Uleb128,
-    'y': Uleb128
-});
-
 type ExtractValueType<T> = T extends new (...args: any) => Base<infer R> ? R : any;
 function typedStructure<
     S extends { [Key in keyof S]: S[Key] } & {
@@ -163,7 +137,6 @@ function typedStructure<
     }
 >(schema: S) {
     type Keys = Exclude<keyof S, 'type'>;
-    type ValueTypes = keyof S['type'];
 
     return class TypedStructure<
         //@ts-ignore
@@ -173,8 +146,34 @@ function typedStructure<
         //@ts-ignore
         protected substructure = null as InstanceType<S["type"][T]>;
 
-        //#region init
+        fromBuffer(buffer: BufferWrapper) {
+            const arrayOfBuff = [] as BufferWrapper[];
 
+            let keys = Object.keys(this.structure);
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[ i ];
+                
+                if (key === 'type') {
+                    const type = buffer.readUleb128() as any;
+
+                    this.setValue('type', type);
+                    keys = Object.keys(this.structure);
+                } else {
+                    const field = this.get(key as any);
+
+                    field.fromBuffer(buffer);
+                }
+            }
+
+            return this;
+        }
+
+        //#region init
+        
+        init(): this;
+        init<
+            Type extends keyof S['type']
+        >(): this & TypedStructure<Type>;
         init() {
             this.initFields();
             return this;
@@ -188,7 +187,7 @@ function typedStructure<
             for (let key in schema) {
                 const constructor = schema[ key ];
                 let instance: typeof schema[Keys];
-    
+
                 if (key === 'type') {
                     if (previousStructure[ key ]) {
                         instance = previousStructure[ key ];
@@ -224,24 +223,23 @@ function typedStructure<
         //#endregion
         //#region get
 
-        //@ts-ignore redefine
+        public get(
+            key: 'type'
+        ): Uleb128;
+
         public get<
-            SubClass extends S['type'][T],
-            SubStructure extends SubClass[Exclude<keyof SubClass, "prototype">],
-            Key extends keyof S | keyof SubStructure,
-            SubType extends
-                Key extends 'type' ? typeof Uleb128 :
-                Key extends keyof SubStructure ? SubStructure[Key] :
-                Key extends Keys ? S[Key] :
-                never
+            Key extends Exclude<keyof S, 'type'>
         >(
             key: Key
-        ):
-            InstanceType<
-                //@ts-ignore
-                SubType
-            >
-        {
+        ): InstanceType<S[Key]>;
+
+        public get<
+            Key extends keyof S['type'][T][Exclude<keyof S['type'][T], "prototype">]
+        >(
+            key: Key
+        ): InstanceType<S['type'][T][Exclude<keyof S['type'][T], "prototype">][Key]>;
+
+        public get(key) {
             if (this.structure.hasOwnProperty(key)) {
                 //@ts-ignore
                 return this.structure[key];
@@ -293,7 +291,11 @@ function typedStructure<
         >(
             key: 'type',
             value: V
-        ): TypedStructure<V>;
+        ):
+            InstanceType<
+                //@ts-ignore
+                S['type'][V]
+            > & this;
 
         //@ts-ignore redefine
         public setValue<
@@ -312,7 +314,7 @@ function typedStructure<
             key: K,
             value: V
         ): this;
-            
+
         //@ts-ignore redefine
         public setValue(
             key,
@@ -333,7 +335,7 @@ function typedStructure<
                     while (this.substructure['$prototypeStructure'] !== Object.getPrototypeOf(substructurePrototype)) {
                         substructurePrototype = Object.getPrototypeOf(substructurePrototype);
                     }
-        
+
                     schema['type'][ value ]['$prototypeSubstructure'] = substructurePrototype;
                 } else {
                     substructurePrototype = schema['type'][ value ]['$prototypeSubstructure'];
@@ -351,18 +353,6 @@ function typedStructure<
 
                 Object.setPrototypeOf(newPrototype, this.$prototype);
                 Object.setPrototypeOf(this, newPrototype);
-
-                // ((obj) => {
-                //     const chain = [];
-                //     let prot = Object.getPrototypeOf(obj);
-    
-                //     while (prot !== null) {
-                //         chain.push(prot.constructor.name);
-                //         prot = Object.getPrototypeOf(prot);
-                //     }
-    
-                //     console.log(chain);
-                // })(this);
 
                 return this;
             }
@@ -406,9 +396,63 @@ function typedStructure<
     }
 }
 
+/******************************/
+
+class Uleb128 extends Base<number> {
+    protected value = -1;
+
+    public fromBuffer(buffer: BufferWrapper) {
+        this.value = buffer.readUleb128();
+        return this;
+    }
+    public toBuffer() {
+        return BufferWrapper.numberToUleb128Buffer(this.value);
+    }
+    public isValid() {
+        return this.value > -1;
+    }
+}
+
+class Blob extends Base<BufferWrapper> {
+    protected size = 0;
+
+    public fromBuffer(buffer: BufferWrapper) {
+        this.size = buffer.readUleb128();
+        this.value = buffer.read(this.size);
+        return this;
+    }
+    public toBuffer() {
+        return BufferWrapper.concat([
+            BufferWrapper.numberToUleb128Buffer(this.value.length),
+            this.value
+        ]);
+    }
+
+    public setValue(value: BufferWrapper) {
+        this.value = value;
+        this.size = value.length;
+
+        return this;
+    }
+
+    public isValid() {
+        return this.value.length === this.size;
+    }
+
+    public getSize() {
+        return this.size;
+    }
+}
+
+const Coord = structure({
+    'x': Uleb128,
+    'y': Uleb128
+});
+
 const typeMap = {
     Uleb128,
-    Coord
+    Coord,
+    Blob
 };
 type TypeMap = typeof typeMap;
 class Structure {
@@ -440,6 +484,42 @@ describe('main', () => {
             )).toBe(0);
             expect(Buffer.compare(
                 element2.toBuffer(),
+                buffer
+            )).toBe(0);
+        }
+    });
+    it('Blob', () => {
+        function randomBuffer(
+            length: number
+        ) {
+            let hex = '';
+            for (let i = 0; i < length; i++) {
+                hex+= ("f" + Math.random().toString(16).replace(".", "")).substr(-2, 2);
+            }
+            return BufferWrapper.from(hex, 'hex');
+        }
+        function randomKey() {
+            return randomBuffer(32);
+        }
+        function randomData() {
+            return randomBuffer(256 + Math.floor(Math.random() * 1024));
+        }
+
+        for (let i = 0; i < 100; i++) {
+            const buffer = randomData();
+
+            const element1 = Structure.create('Blob').setValue(buffer);
+            const element2 = Structure.create('Blob').fromBuffer(BufferWrapper.concat([
+                BufferWrapper.numberToUleb128Buffer(buffer.length),
+                buffer
+            ]));
+
+            expect(Buffer.compare(
+                element1.getValue(),
+                buffer
+            )).toBe(0);
+            expect(Buffer.compare(
+                element2.getValue(),
                 buffer
             )).toBe(0);
         }
@@ -492,11 +572,16 @@ describe('type', () => {
     }) {
         test() {return 'B';}
     };
-    const Typed = class Typed extends typedStructure({
+    class Typed extends typedStructure({
         'id': Uleb128,
         'type': {
             1: StructureA,
-            2: StructureB
+            2: StructureB,
+            3: class C extends structure({
+                'data': Blob
+            }) {
+                test() {return 'C';}
+            }
         }
     }) {
         base() {
@@ -522,28 +607,45 @@ describe('type', () => {
 
         expect(instance1.get('a').getValue()).toBe(3);
 
-        const instance2 = instance1.setValue('type', 2);
-        
+        const instance2 = instance.setValue('type', 2);
+
         expect(instance2.get('type').getValue()).toBe(2);
         expect(instance2.get('b').getValue()).toBe(-1);
-
-        //console.log(instance2);
     });
     it('pomirfizm', () => {
         const instance = new Typed().init();
         const instance1 = instance.setValue('type', 1);
 
-        //@ts-ignore
         expect(instance1.test()).toBe('A');
-        //@ts-ignore
         expect(instance1.base()).toBe('X');
 
-        const instance2 = instance1.setValue('type', 2);
-        
-        //@ts-ignore
+        const instance2 = instance.setValue('type', 2);
+
         expect(instance2.test()).toBe('B');
-        //@ts-ignore
         expect(instance2.base()).toBe('X');
+
+        const instance3 = instance.setValue('type', 3);
+
+        expect(instance3.test()).toBe('C');
+        expect(instance3.base()).toBe('X');
+    });
+    it('buffer', () => {
+        const buffHex = `14    03    04 11 22 33 44`.replace(/\s/g, '');
+        const buffer = BufferWrapper.from(buffHex, 'hex');
+        const instance = new Typed().init<3>();
+
+        instance.fromBuffer(buffer);
+
+        expect(instance.getValue('id')).toBe(0x14);
+        expect(instance.get('type').getValue()).toBe(3);
+        expect(BufferWrapper.compare(
+            instance.getValue('data'),
+            BufferWrapper.from('11223344', 'hex')
+        )).toBe(0);
+        expect(BufferWrapper.compare(
+            instance.toBuffer(),
+            buffer
+        )).toBe(0);
     });
 });
 
