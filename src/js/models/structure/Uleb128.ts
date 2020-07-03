@@ -1,32 +1,19 @@
 import BufferWrapper from "@/libs/BufferWrapper";
-import { Base } from "@/models/structure";
+import { Base } from "./Base";
 
 /******************************/
 
-export class Uleb128 extends Base {
-    protected value: number = -1;
+export class Uleb128 extends Base<number> {
+    protected value = -1;
 
-    readBuffer() {
-        if (this.buffer.cursor === -1) {
-            return this;
-        }
-
-        this.$cursorStart = this.buffer.cursor;
-        this.value = this.buffer.readUleb128();
-        this.$cursorEnd = this.buffer.cursor;
+    public fromBuffer(buffer: BufferWrapper) {
+        this.value = buffer.readUleb128();
         return this;
     }
-
-    toBuffer() {
-        try {
-            return BufferWrapper.numberToUleb128Buffer(this.value);
-        } catch (error) {
-            console.log(this);
-            throw error;
-        }
+    public toBuffer() {
+        return BufferWrapper.numberToUleb128Buffer(this.value);
     }
-
-    isValid() {
+    public isValid() {
         return this.value > -1;
     }
 }

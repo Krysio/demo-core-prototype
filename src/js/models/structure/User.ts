@@ -1,4 +1,6 @@
-import { BaseStructure, defineTypes, Uleb128, Key } from "@/models/structure";
+import { structure, typedStructure } from "./Base";
+import { Uleb128 } from "./Uleb128";
+import { Key } from "./Key";
 
 /******************************/
 
@@ -9,36 +11,26 @@ export const TYPE_USER_PUBLIC = 3;
 
 /******************************/
 
-export class User extends BaseStructure {
-    protected schema = {
-        'type': defineTypes({
-            [TYPE_USER_ROOT]: class UserRoot extends User {
-                protected schema = {
-                    'key': Key
-                };
-            },
-            [TYPE_USER_ADMIN]: class UserAdmin extends User {
-                protected schema = {
-                    'userId': Uleb128,
-                    'level': Uleb128,
-                    'key': Key
-                };
-            },
-            [TYPE_USER_USER]: class UserUser extends User {
-                protected schema = {
-                    'userId': Uleb128,
-                    'key': Key
-                };
-            },
-            [TYPE_USER_PUBLIC]: class UserPublic extends User {
-                protected schema = {
-                    'userId': Uleb128,
-                    'key': Key
-                };
-            }
-        })
-    };
-
+export class User extends typedStructure({
+    'type': {
+        [TYPE_USER_ROOT]: structure({
+            'key': Key
+        }),
+        [TYPE_USER_ADMIN]: structure({
+            'userId': Uleb128,
+            'level': Uleb128,
+            'key': Key
+        }),
+        [TYPE_USER_USER]: structure({
+            'userId': Uleb128,
+            'key': Key
+        }),
+        [TYPE_USER_PUBLIC]: structure({
+            'userId': Uleb128,
+            'key': Key
+        }),
+    }
+}) {
     isRoot() {
         const type = this.get("type").getValue() as number;
         return type === TYPE_USER_ROOT;

@@ -1,22 +1,24 @@
-import { BaseStructure, Uleb128, BlockHash, Blob, EMPTY_BLOCK_HASH } from "./structure";
+import { structure, Uleb128, BlockHash, Blob, EMPTY_BLOCK_HASH } from "./structure";
 import BufferWrapper from "@/libs/BufferWrapper";
 import { HashSum } from "@/services/crypto/sha256";
 
-export class Block extends BaseStructure {
-  protected schema = {
-    'version': Uleb128,
-    'index': Uleb128,
-    'time': Uleb128,
-    'previousBlockHash': BlockHash,
-    'transactionCount': Uleb128,
-    'body': Blob
-  };
-
+export class Block extends structure({
+  'version': Uleb128,
+  'index': Uleb128,
+  'time': Uleb128,
+  'previousBlockHash': BlockHash,
+  'transactionCount': Uleb128,
+  'body': Blob
+}) {
   init() {
+    super.init();
+
     this.setValue('version', 0);
     this.setValue('index', 0);
     this.setValue('transactionCount', 0);
     this.setValue('previousBlockHash', EMPTY_BLOCK_HASH);
+
+    return this;
   }
 
   getHash() {
@@ -31,14 +33,14 @@ export class Block extends BaseStructure {
     return BufferWrapper.create(hash.get());
   }
 
-  getIndex() { return this.getValue('index') as number }
+  getIndex() { return this.getValue('index'); }
   setIndex(value: number) { this.setValue('index', value); return this; }
-  getTime() { return this.getValue('time') as number }
+  getTime() { return this.getValue('time'); }
   setTime(value: number) { this.setValue('time', value); return this; }
-  getPreviousBlockHash() { return this.getValue('previousBlockHash') as BufferWrapper }
+  getPreviousBlockHash() { return this.getValue('previousBlockHash'); }
   setPreviousBlockHash(value: BufferWrapper) { this.setValue('previousBlockHash', value); return this; }
-  getCountOfTransactions() { return this.getValue('transactionCount') as number }
-  getBody() { return this.getValue('body') as BufferWrapper }
+  getCountOfTransactions() { return this.getValue('transactionCount'); }
+  getBody() { return this.getValue('body'); }
 
   insertTransaction(
     txn: BufferWrapper
@@ -50,7 +52,7 @@ export class Block extends BaseStructure {
       ])
     );
 
-    this.set(
+    this.setValue(
       'transactionCount',
       this.getValue('transactionCount') + 1
     );

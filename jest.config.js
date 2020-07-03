@@ -2,6 +2,11 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
+  "globals": {'ts-jest': {
+    diagnostics: false,
+    isolatedModules: false,
+  }},
+  "preset": "ts-jest",
   "rootDir": "src/js",
   "testMatch": [
     "<rootDir>/**/__test__/**/*.(test|spec).{js,jsx,ts,tsx}"

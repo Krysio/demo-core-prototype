@@ -1,6 +1,6 @@
 import { Hash } from "./Hash";
 import { Uleb128 } from "./Uleb128";
-import { BaseStructure } from "./Base";
+import { structure, typedStructure } from "./Base";
 
 /******************************/
 
@@ -37,17 +37,15 @@ type FileType =
 
 /******************************/
 
-export class Document extends BaseStructure {
-    protected schema = {
-        'authorId': Uleb128,
-        'timeEnd': Uleb128,
-        'fileHash': Hash,
-        'fileType': Uleb128,
-        'countOfOptions': Uleb128,
-        'countOfCredits': Uleb128,
-        'typeDistribution': Uleb128,
-    };
-
+export class Document extends structure({
+    'authorId': Uleb128,
+    'timeEnd': Uleb128,
+    'fileHash': Hash,
+    'fileType': Uleb128,
+    'countOfOptions': Uleb128,
+    'countOfCredits': Uleb128,
+    'typeDistribution': Uleb128,
+}) {
     isValid() {
         let result = false;
 
