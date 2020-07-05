@@ -1,10 +1,10 @@
 import { Config } from "../Config";
-import { structure, typedStructure } from "./Base";
+import { Base, structure, typedStructure } from "./base";
 import { Uleb128 } from "./Uleb128";
 import { Signature } from "./Signature";
 import { Blob } from "./Blob";
 import { Hash, BlockHash } from "./Hash";
-import { User, TYPE_USER_ADMIN } from "./User";
+import { User, TYPE_USER_ADMIN, TYPE_USER_ROOT } from "./User";
 import { Author } from "./Author";
 import { BlockIndex } from "./BlockIndex";
 import { Context } from "@/context";
@@ -29,10 +29,92 @@ export const TYPE_TXN_INSERT_DOCUMENT = 48;
 
 /******************************/
 
-const Internal = {
+class TxnInternalInsertUser extends structure({
+    'data': User,
     'author': Author,
     'signature': Signature
-};
+}) {
+    async verifyPrepareInputs(
+        context: Context,
+        selfBlock: Block
+    ) {
+        const author = await context.getUserById(
+            this.get('author').getValue()
+        );
+        const userById = await context.getUserById(
+            this.get('data').get('userId', Uleb128).getValue()
+        );
+        const previousBlock = await context.getBlockByHash(
+            selfBlock.getPreviousBlockHash()
+        );
+        const signingBlock = await context.getBlockByHash(
+            previousBlock.getPreviousBlockHash()
+        );
+        return { author, userById, selfBlock, signingBlock };
+    }
+    verify(inputs: {
+        author: User;
+        userById: User;
+        selfBlock: Block;
+        signingBlock: Block;
+    }) {
+        const user = this.get('data');
+        const author = inputs.author.asType(TYPE_USER_ADMIN);
+
+        if (inputs.userById !== null) {
+            return false;
+        }
+        if (user.isType(TYPE_USER_ADMIN)) {
+            if (author.getValue('level') >= user.getValue('level')) {
+                return false;
+            }
+        }
+
+        // podpis
+
+        const key = author.get('key');
+        const hash = this.getHash(
+            inputs.selfBlock,
+            inputs.signingBlock,
+            author.isAdminLike() ? 'index' : 'hash'
+        );
+        const signature = this.get('signature').getValue();
+
+        if (key.verify(hash, signature) === false) {
+            return false;
+        }
+
+        return true;
+    }
+    getHash(
+        selfBlock: Block,
+        signingBlock: Block,
+        signingValue: 'index' | 'hash'
+    ) {
+        const hash = new HashSum();
+
+        hash.push(selfBlock.get('version').toBuffer());
+        hash.push(this.get('type', Uleb128).toBuffer());
+        hash.push(this.get('data').toBuffer());
+
+        if (signingValue === 'hash') {
+            hash.push(this.get('author').toBuffer());
+            hash.push(signingBlock.getHash());
+        }
+        if (signingValue === 'index') {
+            hash.push(this.get('author').toBuffer());
+            hash.push(signingBlock.get('index').toBuffer());
+        }
+
+        return BufferWrapper.create(hash.get());
+    }
+    apply(context: Context) {
+        const user = this.get('data', User);
+        const userId = user.getValue('userId', Uleb128);
+
+        context.storeUserWithId(userId, user.toBuffer());
+    }
+}
 
 export class TxnInternal extends typedStructure({
         'type': {
@@ -43,9 +125,17 @@ export class TxnInternal extends typedStructure({
                     const user = this.get('data') as User;
                     return user.isRoot() && super.isValid();
                 }
+
+                apply(context: Context) {
+                    const data = this.get('data').toBuffer();
+
+                    if (data !== null) {
+                        context.storeUserWithId(0, data);
+                    }
+                }
             },
             [TYPE_TXN_SET_CONFIG]: class TxnSetConfig extends structure({
-                    'data': Blob
+                'data': Blob
             }) {
                 isValid() {
                     return this.getConfig().isValid() && super.isValid();
@@ -64,103 +154,24 @@ export class TxnInternal extends typedStructure({
             },
             [TYPE_TXN_HASH_LIST]: class TxnDbHashList extends structure({
                 'data': HashList
-            }) {},
+            }) {
+                apply(context: Context) {}
+            },
 
             //#region insert user
-            [TYPE_TXN_INSERT_USER_ADMIN]: class TxnInsertKeyAdmin extends structure({
-                'data': User,
-                ...Internal
-            }) {
+            [TYPE_TXN_INSERT_USER_ADMIN]: class TxnInsertUserAdmin extends TxnInternalInsertUser {
                 isValid() {
                     const user = this.get('data') as User;
                     return user.isAdmin() && super.isValid();
                 }
-
-                async verifyPrepareInputs(
-                    context: Context,
-                    selfBlock: Block
-                ) {
-                    const author = await context.getUserById(
-                        this.get('author').getValue()
-                    );
-                    const previousBlock = await context.getBlockByHash(
-                        selfBlock.getPreviousBlockHash()
-                    );
-                    const signingBlock = await context.getBlockByHash(
-                        previousBlock.getPreviousBlockHash()
-                    );
-                    return { author, selfBlock, signingBlock };
-                }
-                verify(
-                    this: this & TxnInternal,
-                    inputs: {
-                        author: User;
-                        selfBlock: Block;
-                        signingBlock: Block;
-                    }
-                ) {
-                    if (!this.isValid()) {
-                        return false;
-                    }
-
-                    // poprawny autor - root lub administrator
-
-                    let { selfBlock, signingBlock } = inputs;
-                    const author = inputs.author.asType<typeof TYPE_USER_ADMIN>();
-
-                    if (author === null
-                        && !author.isAdminLike()
-                    ) {
-                        return false;
-                    }
-
-                    // TODO userId nie jest zajęty
-
-                    try {
-                        const user = this.get('data');
-
-                        if (!user.isType(TYPE_USER_ADMIN)) {
-                            return false;
-                        } else {
-                            if (user.get('type').getValue() !== TYPE_USER_ADMIN) {
-                                return false;
-                            }
-
-                            if (author.get('level').getValue() + 1 !== user.get('level').getValue()) {
-                                return false;
-                            }
-
-                            const key = author.get('key');
-
-                            if (key.isType(TYPE_KEY_Secp256k1)) {
-                                const hash = this.getHash(selfBlock, signingBlock);
-                                const signature = this.get('signature').getValue();
-
-                                if (key.verify(hash, signature) === false) {
-                                    return false;
-                                }
-                            }
-                        }
-
-                        return true;
-                    } catch (error) {
-                        return false;
-                    }
-                }
             },
-            [TYPE_TXN_INSERT_USER_USER]: class TxnInsertKeyAdmin extends structure({
-                'data': User,
-                ...Internal
-            }) {
+            [TYPE_TXN_INSERT_USER_USER]: class TxnInsertUserUser extends TxnInternalInsertUser {
                 isValid() {
                     const user = this.get('data') as User;
                     return user.isUser() && super.isValid();
                 }
             },
-            [TYPE_TXN_INSERT_USER_PUBLIC]: class TxnInsertKeyAdmin extends structure({
-                'data': User,
-                ...Internal
-            }) {
+            [TYPE_TXN_INSERT_USER_PUBLIC]: class TxnInsertUserPublic extends TxnInternalInsertUser {
                 isValid() {
                     const user = this.get('data') as User;
                     return user.isPublic() && super.isValid();
@@ -169,15 +180,23 @@ export class TxnInternal extends typedStructure({
             //#endregion
             //#region remove user
             [TYPE_TXN_REMOVE_USER]: class TxnRemoveUser extends structure({
-                'data': Uleb128,
-                ...Internal
-            }) {}
+                'data': structure({
+                    'userId': Uleb128,
+                    'reason': Uleb128
+                }),
+                'author': Author,
+                'signature': Signature
+            }) {
+                apply(context: Context) {
+                    const userId = this.get('data').getValue('userId');
+                    context.removeUserById(userId);
+                }
+            }
             //#endregion
         }
     }
 ) {
-    apply(context: Context) { }
-
+    apply(context: Context) {throw new Error();}
     getHash(
         selfBlock: Block,
         signingBlock: Block
@@ -200,21 +219,74 @@ export class TxnInternal extends typedStructure({
     }
 }
 
-const TxnStandaloneByAdmin = {
-    'signingBlockIndex': BlockIndex,
-    'author': Author,
-    'signature': Signature
-};
-const TxnStandaloneByUser = {
-    'signingBlockHash': BlockHash,
-    'author': Author,
-    'signature': Signature
+function txnByAdmin<S extends {[K in keyof S]: S[K]}>(schema: S) {
+    return class TxnByAdmin extends structure({
+        ...schema,
+        'signingBlockIndex': BlockIndex,
+        'author': Author,
+        'signature': Signature
+    }) {
+        isUserTransaction() {return false;}
+        isAdminTransaction() {return true;}
+        verify(inputs: {
+            author: User;
+        }) {
+            if (inputs.author === null) {
+                return false;
+            }
+
+            const author = inputs.author.asType(TYPE_USER_ADMIN);
+
+            if (!author.isAdminLike()) {
+                return false;
+            }
+            return true;
+        }
+        async verifyPrepareInputs(context: Context) {
+            const author = await context.getUserById(this.getValue('author'));
+            return { author };
+        }
+    };
 }
 
-class TxnInsertUserBase extends structure({
-    'data': User,
-    ...TxnStandaloneByAdmin
+function txnByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
+    return class TxnByAdmin extends structure({
+        ...schema,
+        'signingBlockHash': BlockHash,
+        'author': Author,
+        'signature': Signature
+    }) {
+        isUserTransaction() {return true;}
+        isAdminTransaction() {return false;}
+        async verifyPrepareInputs(context: Context) {
+            const author = await context.getUserById(this.getValue('author'));
+            return { author };
+        }
+    };
+}
+
+class TxnInsertUserBase extends txnByAdmin({
+    'data': User
 }) {
+    public verify(inputs: {
+        author: User;
+        userById: User;
+    }) {
+        if (inputs.userById !== null) {
+            return false;
+        }
+        return super.verify(inputs);
+    }
+    async verifyPrepareInputs(context: Context) {
+        const author = await context.getUserById(
+            this.getValue('author')
+        );
+        const userById = await context.getUserById(
+            this.get('data', User)
+            .getValue('userId', Uleb128)
+        );
+        return { author, userById };
+    }
     public getInsertingUser() {
         return this.get('data');
     }
@@ -225,6 +297,39 @@ export class TxnStandalone extends typedStructure({
     'type': {
         //#region insert user
         [TYPE_TXN_INSERT_USER_ADMIN]: class TxnInsertUserAdmin extends TxnInsertUserBase {
+            verify(
+                this: TxnStandalone & this,
+                inputs: {
+                    author: User;
+                    userById: User;
+                }
+            ) {
+                // dziedziczenie
+                if (!super.verify(inputs)) {
+                    return false;
+                }
+
+                const author = inputs.author.asType(TYPE_USER_ADMIN);
+                const user = this.get('data', User);
+
+                // wstawiany typ: admin
+                if (!user.isType(TYPE_USER_ADMIN)) {
+                    return false;
+                }
+                // dodawany admin tylko niższej rangi
+                if (author.getValue('level') >= user.getValue('level')) {
+                    return false;
+                }
+                // podpis
+                if (!author.get('key').verify(
+                    this.getHash(),
+                    this.getValue('signature')
+                )) {
+                    return false;
+                }
+
+                return true;
+            }
             isValid() {
                 const user = this.getInsertingUser();
                 return user.isAdmin() && super.isValid();
@@ -245,21 +350,23 @@ export class TxnStandalone extends typedStructure({
         //#endregion
 
         //#region remove user
-        [TYPE_TXN_REMOVE_USER]: class TxnRemoveUser extends structure({
+        [TYPE_TXN_REMOVE_USER]: class TxnRemoveUser extends txnByAdmin({
             'data': structure({
                 'userId': Uleb128,
                 'reason': Uleb128
-            }),
-            ...TxnStandaloneByAdmin
+            })
         }) {},
         //#endregion
 
-        [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends structure({
-            'data': Document,
-            ...TxnStandaloneByUser
+        [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends txnByUser({
+            'data': Document
         }) {}
     }
 }) {
+    isUserTransaction(): boolean {throw new Error();}
+    isAdminTransaction(): boolean {throw new Error();}
+    verifyPrepareInputs(context: Context) {return {};}
+    verify(inputs: any): boolean {throw new Error();}
     getHash() {
         const hash = new HashSum();
 
@@ -267,11 +374,11 @@ export class TxnStandalone extends typedStructure({
         hash.push(this.get('type').toBuffer());
         hash.push(this.get('data').toBuffer());
 
-        if (this.has('signingBlockHash')) {
+        if (this.isUserTransaction()) {
             hash.push(this.get('author').toBuffer());
             hash.push(this.get('signingBlockHash', BlockHash).getValue());
         }
-        if (this.has('signingBlockIndex')) {
+        if (this.isAdminTransaction()) {
             hash.push(this.get('author').toBuffer());
             hash.push(this.get('signingBlockIndex', BlockIndex).toBuffer());
         }

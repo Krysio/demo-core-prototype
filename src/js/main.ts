@@ -11,14 +11,14 @@ if (process.env.NODE_ENV === 'development') {
 
 /******************************/
 
-import * as dd from '@/models/test';
-console.log(dd);
+// import * as dd from '@/models/test';
+// console.log(dd);
 
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
 import $, { JsonNode } from 'react-json-syntax';
 
-/****************************** /
+/******************************/
 
 import Node from '@/models/node';
 import { createGenesisiForFastTest } from '@/factories/block';

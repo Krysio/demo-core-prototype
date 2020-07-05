@@ -1,157 +1,9 @@
 import BufferWrapper from "@/libs/BufferWrapper";
+import { Base } from "./Base";
+import { structure } from "./structure";
+import { Uleb128 } from "../Uleb128";
 
 /******************************/
-
-export abstract class Base<T> {
-    protected value: T;
-    protected parent: Base<{}> = null;
-    protected $prototype = Object.getPrototypeOf(this);
-
-    public setValue(value: T) {
-        this.value = value;
-        return this;
-    }
-    public getValue() {
-        return this.value;
-    }
-
-    public get(): never { throw new Error() };
-    public set(): never { throw new Error };
-
-    public fromBuffer(buffer: BufferWrapper): this { throw new Error() };
-    public toBuffer(): BufferWrapper { throw new Error };
-    public init() {return this;}
-
-    public getParent() {
-        return this.parent;
-    }
-    public setParent(value: Base<unknown>) {
-        this.parent = value;
-        return this;
-    }
-
-    public isValid() {
-        return true;
-    }
-}
-
-/******************************/
-
-export function structure<
-    S extends { [Key in keyof S]: S[Key] }
->(
-    schema: S
-) {
-    return class Structure extends Base<S> {
-        static schema = schema;
-        protected value = null;
-        protected structure = {} as { [Key in keyof S]: InstanceType<S[Key]> };
-        protected $prototypeStructure = Structure.prototype;
-
-        init() {
-            this.initFields();
-            return this;
-        }
-        initFields() {
-            for (let key in schema) {
-                const constructor = schema[key];
-                //@ts-ignore
-                this.set(key, new constructor())
-            }
-        }
-
-        //@ts-ignore redefine
-        getValue<
-            K extends Extract<keyof S, string>,
-            V extends S[K] extends new (...args: any) => Base<infer R> ? R : any
-        >(
-            key: K
-        ) {
-            //@ts-ignore
-            return this.get(key).getValue() as V;
-        }
-        //@ts-ignore redefine
-        setValue<
-            K extends Extract<keyof S, string>,
-            V extends S[K] extends new (...args: any) => Base<infer R> ? R : any
-        >(
-            key: K,
-            value: V
-        ) {
-            //@ts-ignore
-            this.get(key).setValue(value);
-            return this;
-        }
-
-        public has<
-            K extends Extract<keyof S, string>
-        >(
-            key: K
-        ) {
-            return key in this.structure;
-        }
-
-        //@ts-ignore redefine
-        public get<
-            K extends Extract<keyof S, string>
-        >(
-            key: K
-        ): InstanceType<S[K]> {
-            return this.structure[key];
-        }
-        //@ts-ignore redefine
-        public set<
-            K extends Extract<keyof S, string>
-        >(
-            key: K,
-            value: S[K]
-        ) {
-            this.structure[key] = value;
-            return this;
-        }
-
-        toBuffer() {
-            const arrayOfBuff = [] as BufferWrapper[];
-
-            for (let key in this.structure) {
-                const field = this.get(key) as Base<unknown>;
-                arrayOfBuff.push(field.toBuffer());
-            }
-            return BufferWrapper.concat(arrayOfBuff);
-        }
-
-        fromBuffer(buffer: BufferWrapper) {
-            const arrayOfBuff = [] as BufferWrapper[];
-
-            for (let key in this.structure) {
-                const field = this.get(key) as Base<unknown>;
-
-                field.fromBuffer(buffer);
-            }
-
-            return this;
-        }
-
-        getKeys() {
-            return Object.keys(this.structure);
-        }
-
-        isValid() {
-            for (let key in this.structure) {
-                const field = this.get(key) as Base<unknown>;
-
-                if (!field.isValid()) {
-                    return false;
-                }
-            }
-            return true;
-        }
-    }
-}
-
-/******************************/
-
-import { Uleb128 } from "./Uleb128";
 
 type ExtractValueType<T> = T extends new (...args: any) => Base<infer R> ? R : any;
 export function typedStructure<
@@ -168,13 +20,19 @@ export function typedStructure<
         T extends keyof S['type'] = keyof S['type']
     > extends structure(schema) {
         static types: keyof S['type'];
+        protected $typedStricturePrototype = TypedStructure.prototype;
         //@ts-ignore
         protected substructure = null as InstanceType<S["type"][T]>;
+        protected substructurePrototypes = {} as {[Keys in T]: any};
 
         fromBuffer(buffer: BufferWrapper) {
             const arrayOfBuff = [] as BufferWrapper[];
 
+            this.$buffer = buffer;
+            this.$cursor = buffer.cursor;
+
             let keys = Object.keys(this.structure);
+
             for (let i = 0; i < keys.length; i++) {
                 const key = keys[ i ];
 
@@ -212,7 +70,7 @@ export function typedStructure<
 
         asType<
             Type extends Extract<keyof S['type'], number>
-        >() {
+        >(type: Type) {
             return this as InstanceType<
                 //@ts-ignore
                 S['type'][Type]
@@ -227,6 +85,36 @@ export function typedStructure<
                 S['type'][Type]
             > & this;
         init() {
+            function createPrototype(Class){
+                const prototype = {};
+                for (let field of Object.getOwnPropertyNames(Class.prototype)) {
+                    prototype[ field ] = Class.prototype[ field ];
+                }
+                Object.setPrototypeOf(
+                    prototype,
+                    Object.getPrototypeOf(Class.prototype)
+                );
+                return prototype;
+            }
+
+            // prototypy
+            for (let key in schema['type']) {
+                const constructor = schema['type'][ key ];
+
+                //console.log('-START-');
+                let cProtoA = createPrototype(constructor);
+                let cProtoB = this.substructurePrototypes[ key ] = cProtoA;
+
+                //console.log(cProtoA);
+                while (Object.getPrototypeOf(cProtoB).constructor !== Base) {
+                    cProtoA = cProtoB;
+                    cProtoB = createPrototype(Object.getPrototypeOf(cProtoB).constructor);
+                    Object.setPrototypeOf(cProtoA, cProtoB);
+                }
+
+                Object.setPrototypeOf(cProtoA, Object.getPrototypeOf(this));
+            }
+
             this.initFields();
             return this;
         }
@@ -247,6 +135,8 @@ export function typedStructure<
                     } else {
                         //@ts-ignore
                         instance = new Uleb128();
+                        //@ts-ignore
+                        instance.init();
                     }
                     this.set(key, instance);
                     if (this.substructure !== null) {
@@ -266,6 +156,8 @@ export function typedStructure<
                     } else {
                         //@ts-ignore
                         instance = new constructor();
+                        //@ts-ignore
+                        instance.init();
                     }
                 }
 
@@ -393,35 +285,19 @@ export function typedStructure<
                 //@ts-ignore
                 this.structure["type"].setValue(value);
 
-                //@ts-ignore
-                this.substructure = new schema['type'][ value ]();
-
-                let substructurePrototype;
-
-                if (!schema['type'][ value ]['$prototypeSubstructure']) {
-                    substructurePrototype = Object.getPrototypeOf(this.substructure);
-
-                    while (this.substructure['$prototypeStructure'] !== Object.getPrototypeOf(substructurePrototype)) {
-                        substructurePrototype = Object.getPrototypeOf(substructurePrototype);
-                    }
-
-                    schema['type'][ value ]['$prototypeSubstructure'] = substructurePrototype;
-                } else {
-                    substructurePrototype = schema['type'][ value ]['$prototypeSubstructure'];
-                    Object.setPrototypeOf(substructurePrototype, this.substructure['$prototypeStructure']);
+                if (!schema['type'][ value ]) {
+                    throw new Error(`Invalid type ${ value } in ${ Object.getPrototypeOf(this).constructor.name }`);
                 }
 
+                //@ts-ignore
+                this.substructure = new schema['type'][ value ]();
                 //@ts-ignore
                 this.substructure.setParent(this);
                 //@ts-ignore
                 this.substructure.init();
                 this.initFields();
 
-                //@ts-ignore
-                const newPrototype = substructurePrototype;
-
-                Object.setPrototypeOf(newPrototype, this.$prototype);
-                Object.setPrototypeOf(this, newPrototype);
+                Object.setPrototypeOf(this, this.substructurePrototypes[ value ]);
 
                 return this;
             }
@@ -443,24 +319,35 @@ export function typedStructure<
             SubType extends
                 Key extends keyof SubStructure ? SubStructure[Key] :
                 Key extends Keys ? S[Key] :
-                never,
-            ValueType extends
-                ExtractValueType<SubType>
+                never
         >(
             key: Key
-        ) {
+        ): ExtractValueType<SubType>;
+        //@ts-ignore redefine
+        public getValue<Type extends new () => any>(
+            key: string,
+            type: Type
+        ): ExtractValueType<Type>;
+        //@ts-ignore redefine
+        public getValue(key, type) {
             if (this.structure.hasOwnProperty(key)) {
                 //@ts-ignore
-                return this.structure[key].getValue() as ValueType;
+                return this.structure[key].getValue();
             }
             if (this.substructure
                 && this.substructure.hasOwnProperty(key)
             ) {
                 //@ts-ignore
-                return this.substructure.get(key).getValue() as ValueType;
+                return this.substructure.get(key).getValue();
             }
         }
 
         //#endregion
+
+        public fromStructure(structure: any) {
+            this.setValue('type', structure.getValue('type'));
+
+            return super.fromStructure(structure);
+        }
     }
 }

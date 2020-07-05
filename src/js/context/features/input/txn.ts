@@ -1,15 +1,13 @@
 import { Context } from "@/context";
-import { TxnAny, TxnTypeAdmin, TxnTypeUser, TxnTypeInternal } from "@/models/transaction";
-import { Block } from "@/models/block";
+import { TxnStandalone, BlockIndex, BlockHash } from "@/models/structure";
 import Time from "@/services/Time";
-import { UserRoot, UserAdmin, User } from "@/models/user";
 
 /******************************/
 
 export default function (rawContext: unknown) {
     const context = rawContext as Context;
 
-    context.events.on('input/txn', async (txn: TxnAny) => {
+    context.events.on('input/txn', async (txn: TxnStandalone) => {
         // Node nie działa
         if (context.hasTopBlock() === false
             || context.hasConfig() === false
@@ -18,8 +16,8 @@ export default function (rawContext: unknown) {
             return;
         }
 
-        // Transakcje wewnętrzne nie przychodzą z sieci
-        if (txn instanceof TxnTypeInternal) {
+        //
+        if (!txn.isValid()) {
             context.events.emit('node/txn/verify/reject', txn, 1);
             return;
         }
@@ -38,17 +36,20 @@ export default function (rawContext: unknown) {
         );
         let validSignTarget = false;
 
-        if (txn instanceof TxnTypeAdmin
-            && (txn.getSigningBlockIndex() === firstTopBlock.getIndex()
+        if (txn.isAdminTransaction()) {
+            const index = txn.get('signingBlockIndex', BlockIndex).getValue();
+
+            if (index === firstTopBlock.getIndex()
                 || (
-                    txn.getSigningBlockIndex() === secondTopBlock.getIndex()
+                    index === secondTopBlock.getIndex()
                     && Time.now() < firstTopBlock.getTime() + timeLimit
                 )
-            )
-        ) {
-            validSignTarget = true;
-        } else if (txn instanceof TxnTypeUser) {
-            const signedBlock = await context.getBlockByHash(txn.getSigningBlockHash());
+            ) {
+                validSignTarget = true;
+            }
+        } else if (txn.isUserTransaction()) {
+            const signingHash = txn.get('signingBlockHash', BlockHash).getValue();
+            const signedBlock = await context.getBlockByHash(signingHash);
 
             if (signedBlock === null) {
                 context.events.emit('node/txn/verify/reject', txn, 2);
@@ -80,6 +81,7 @@ export default function (rawContext: unknown) {
             return;
         }
 
+        console.log(inputs);
         context.events.emit('node/txn/verify/reject', txn, 4);
     });
 }

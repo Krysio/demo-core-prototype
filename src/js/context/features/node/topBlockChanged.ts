@@ -1,6 +1,6 @@
 import { Context } from "@/context";
 import { Block } from "@/models/block";
-import { TxnInternal } from "@/models/structure/Transaction";
+import Structure from "@/models/structure";
 
 /******************************/
 
@@ -12,7 +12,7 @@ export default function (rawContext: unknown) {
         const txnCount = block.getCountOfTransactions();
 
         for (let i = 0; i < txnCount; i++) {
-            const txn = TxnInternal.create(body) as TxnInternal;
+            const txn = Structure.create('TxnInternal').fromBuffer(body);
 
             // czytanie każdej transakcji
             txn.apply(context);

@@ -1,6 +1,6 @@
 import { Hash } from "./Hash";
 import { Uleb128 } from "./Uleb128";
-import { structure, typedStructure } from "./Base";
+import { structure, typedStructure } from "./base";
 
 /******************************/
 

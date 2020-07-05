@@ -1,4 +1,4 @@
-import { structure } from "./Base";
+import { structure } from "./base";
 import { Hash } from "./Hash";
 
 export const HashList = structure({

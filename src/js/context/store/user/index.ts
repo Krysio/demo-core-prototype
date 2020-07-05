@@ -1,9 +1,11 @@
+import BufferWrapper from "@/libs/BufferWrapper";
+
 class UserStore {
-    map = new Map<number, Buffer>();
+    map = new Map<number, BufferWrapper>();
 
     async put(
         key: number,
-        data: Buffer
+        data: BufferWrapper
     ) {
         this.map.set(key, data);
     }

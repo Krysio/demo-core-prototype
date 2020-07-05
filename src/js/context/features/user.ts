@@ -1,5 +1,6 @@
 import { Context } from "@/context";
-import { User } from "@/models/user";
+import $$ from "@/models/structure";
+import BufferWrapper from "@/libs/BufferWrapper";
 
 export default function(rawContext: unknown) {
     const context = rawContext as Context;
@@ -14,11 +15,11 @@ export default function(rawContext: unknown) {
                 return null;
             }
 
-            return User.fromBuffer(buffUser);
+            return $$.create('User').fromBuffer(buffUser.seek(0));
         },
         storeUserWithId(
             userId: number,
-            buffUser: Buffer
+            buffUser: BufferWrapper
         ) {
             return context.store.user.put(userId, buffUser);
         },

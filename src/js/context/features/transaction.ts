@@ -1,5 +1,5 @@
 import { Context } from "@/context";
-import { TxnAny } from "@/models/transaction";
+import Structure, { TxnStandalone } from "@/models/structure";
 import { Block } from "@/models/block";
 
 /******************************/
@@ -8,8 +8,8 @@ export default function (refContext: unknown) {
     const context = refContext as Context;
 
     return {
-        waitedTransactionsSigningBlockHash: {} as { [key: string]: TxnAny[] },
-        waitedTransactionsSigningBlockIndex: {} as { [key: number]: TxnAny[] },
+        waitedTransactionsSigningBlockHash: {} as { [key: string]: TxnStandalone[] },
+        waitedTransactionsSigningBlockIndex: {} as { [key: number]: TxnStandalone[] },
         async insertWaitingTransactionsToBlock(
             block: Block
         ) {
@@ -17,7 +17,12 @@ export default function (refContext: unknown) {
             const ref = context.waitedTransactionsSigningBlockIndex[index];
             if (ref) {
                 for (let txn of ref) {
-                    block.insertTransaction(txn.toBuffer(false));
+                    const txnBuffer = Structure
+                        .create('TxnInternal')
+                        .fromStructure(txn)
+                        .toBuffer();
+
+                    block.insertTransaction(txnBuffer);
                 }
 
                 delete context.waitedTransactionsSigningBlockIndex[index];
@@ -37,8 +42,14 @@ export default function (refContext: unknown) {
                         const keyString = key.toString('hex');
                         const ref = context.waitedTransactionsSigningBlockHash[keyString];
                         if (ref) {
+                            console.log(ref);
                             for (let txn of ref) {
-                                block.insertTransaction(txn.toBuffer(false));
+                                block.insertTransaction(
+                                    Structure
+                                    .create('TxnInternal')
+                                    .fromStructure(txn)
+                                    .toBuffer()
+                                );
                             }
 
                             delete context.waitedTransactionsSigningBlockHash[keyString];

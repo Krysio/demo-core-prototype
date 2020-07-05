@@ -1,5 +1,5 @@
 import BufferWrapper from "@/libs/BufferWrapper";
-import { Base } from "./Base";
+import { Base } from "./base/Base";
 
 /******************************/
 

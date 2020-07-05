@@ -28,7 +28,7 @@ export default class BufferWrapper extends Buffer {
         }
     }
 
-    seek(value: number) {
+    public seek(value: number) {
         this.cursor = value;
         return this;
     }

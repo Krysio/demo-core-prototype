@@ -1,5 +1,5 @@
 import BufferWrapper from "@/libs/BufferWrapper";
-import { structure, typedStructure } from "./Base";
+import { structure, typedStructure } from "./base";
 import { Blob } from "./Blob";
 
 /******************************/

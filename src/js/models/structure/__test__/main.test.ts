@@ -1,10 +1,10 @@
 import BufferWrapper from "../../../libs/BufferWrapper";
-import { Blob } from "../Blob";
-import { Uleb128 } from "../Uleb128";
-import {
-    Base, structure, typedStructure
-} from "../Base";
-import Structure from "../";
+import Structure, {
+    Base, structure, typedStructure,
+    Blob, Uleb128,
+
+    TYPE_USER_ROOT
+} from "../";
 
 /******************************/
 
@@ -127,7 +127,11 @@ describe('type', () => {
                 'data': Blob
             }) {
                 test() {return 'C';}
-            }
+            },
+            4: structure({
+                'a': Blob,
+                'b': Blob
+            })
         }
     }) {
         base() {
@@ -194,8 +198,10 @@ describe('type', () => {
             expect(instance.base()).toBe('X');
         }
 
-        expect(instance.asType<3>().test()).toBe('C');
-        expect(instance.asType<3>().base()).toBe('X');
+        expect(instance.asType(3).test()).toBe('C');
+        expect(instance.asType(3).base()).toBe('X');
+
+        const instance4 = instance.setValue('type', 4);
     });
     it('buffer', () => {
         const buffHex = `14    03    04 11 22 33 44`.replace(/\s/g, '');
@@ -216,73 +222,53 @@ describe('type', () => {
         )).toBe(0);
     });
 });
+describe('node', () => {
+    describe('User', () => {
+        it('from buffer - root', () => {
+            const hexPubKey = '02f03e6f795ad7458aa715efd87685551d5dddd2a6630f53316721acc8bf83ee0c'
+            const hex = `00 00 ${ hexPubKey }`.replace(/\s/g, '');
+            const buffer = BufferWrapper.from(hex, 'hex');
+            const user = Structure.create('User').fromBuffer(buffer);
 
-/****************************** /
-import BufferWrapper from "../../../libs/BufferWrapper";
-import * as secp256k1 from "../../../services/crypto/ec/secp256k1";
-import {
-    TxnStandalone,
-    User, Key,
+            expect(TYPE_USER_ROOT).toBe(0);
+            expect(user.getValue('type')).toBe(TYPE_USER_ROOT);
+            expect(user.get('key').getValue('data').toString('hex')).toBe(hexPubKey);
+            expect(user.getValue('level', Uleb128)).toBe(0);
+        });
+    });
+    describe('Txn', () => {
+        it('Standalone to Internal', () => {
+            const hexStandalone = `
+                01
+                10
+                    01
+                    01
+                    01
+                        00 02d735c11eb41e1793fcf818fc513ffbf9129371603b8fc83643c8f8e89cb3fdca
+                00
+                00
+                40cdc3c3f7272a14a6ac4a4375e897bcc68cb6e9365f2c349956065c5c09f202706d82cd23540f6562a67b92107c242d649118534013ae3ee5d11a9c603daf42ed
+            `.replace(/[\s\t\n\r]+/g, '');
+            const hexInternal = `
+                10
+                    01
+                    01
+                    01
+                        00 02d735c11eb41e1793fcf818fc513ffbf9129371603b8fc83643c8f8e89cb3fdca
+                00
+                40cdc3c3f7272a14a6ac4a4375e897bcc68cb6e9365f2c349956065c5c09f202706d82cd23540f6562a67b92107c242d649118534013ae3ee5d11a9c603daf42ed
+            `.replace(/[^\da-f]+/g, '');
+            const bufferStandalone = BufferWrapper.from(hexStandalone, 'hex');
+            const bufferInternal = BufferWrapper.from(hexInternal, 'hex');
+            const txnStandalone = Structure.create('TxnStandalone').fromBuffer(bufferStandalone);
+            const txnInternal = Structure.create('TxnInternal').fromBuffer(bufferInternal);
+            const txnInternalFromStandalone = Structure.create('TxnInternal').fromStructure(txnStandalone);
 
-    TYPE_USER_ADMIN,
-    TYPE_KEY_Secp256k1,
-    EMPTY_BLOCK_HASH
-} from "@/models/structure";
-import { Block } from "@/models/Block";
-
-
-const [privateKey, publicKey] = secp256k1.getKeys();
-const buffHex = `14 10  01 02 03  00 ${publicKey.toString('hex')}  17 33  04 11 22 33 44`.replace(/\s/g, '');
-const buff = BufferWrapper.from(buffHex + buffHex, 'hex');
-const obj1 = TxnStandalone.create(buff, '-');
-const obj2 = TxnStandalone.create();
-const obj3 = TxnStandalone.create(buff, '-');
-const block = Block.create() as Block;
-
-Object.assign(window, {
-    test: {
-        obj1, obj2, block
-    }
+            expect(
+                txnInternal.toBuffer.toString()
+            ).toBe(
+                txnInternalFromStandalone.toBuffer.toString()
+            );
+        });
+    });
 });
-
-const user = User.create()
-    .set('type', TYPE_USER_ADMIN)
-    .set('userId', 0x02)
-    .set('level', 0x03)
-    .set('key',
-        Key.create()
-            .set('type', TYPE_KEY_Secp256k1)
-            .set('data', BufferWrapper.create(publicKey))
-    );
-obj2
-    .set('version', 0x14)
-    .set('type', 0x10)
-    .set('data', user)
-    .set('signingBlockIndex', 0x17)
-    .set('author', 0x33)
-    .set('signature', BufferWrapper.from([0x11, 0x22, 0x33, 0x44]));
-
-block
-    .set('version', 0x14)
-    .set('time', Date.now())
-    .set('index', 0x00)
-    .set('previousBlockHash', EMPTY_BLOCK_HASH);
-
-console.log(obj1, obj2, obj3, obj1.isValid(), obj2.isValid(), obj3.isValid(), block);
-
-console.log(buff.toString('hex'));
-
-const buff2 = obj1.toBuffer();
-console.log(buff2.toString('hex'), Buffer.compare(buff, buff2) === 0);
-console.log(obj2.toBuffer().toString('hex'));
-console.log(1, block.get('body').getValue().toString('hex'));
-block.insertTransaction(buff);
-console.log(1, block.get('body').getValue().toString('hex'));
-const blockBuff = block.toBuffer();
-const block2 = Block.create(blockBuff);
-console.log(2, block2.get('body').getValue().toString('hex'));
-console.log(2, block2.get('body').getValue().toString('hex'));
-
-console.log(8, blockBuff.toString('hex'), block2, TxnStandalone.create(block2.get('body').getValue()));
-
-//*/

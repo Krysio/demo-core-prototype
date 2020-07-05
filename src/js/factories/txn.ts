@@ -59,8 +59,9 @@ export function createAdmin(inputs: {
 }) {
     const [privateKey, publicKey] = secp256k1.getKeys();
 
-    const transaction = $$.create('TxnStandalone');
+    const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_USER_ADMIN);
 
+    transaction.setValue('version', 1);
     transaction.setValue('type', $.TYPE_TXN_INSERT_USER_ADMIN);
     transaction.set('data',
         $$.create('User')
@@ -70,6 +71,7 @@ export function createAdmin(inputs: {
                 .setValue('data', BufferWrapper.create(publicKey))
             )
             .setValue('userId', inputs.userId)
+            .setValue('level', inputs.level)
     );
     transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
     transaction.setValue('author', inputs.parentId);
@@ -99,8 +101,9 @@ export function createUser(inputs: {
     userId: number
 }) {
     const [privateKey, publicKey] = secp256k1.getKeys();
-    const transaction = $$.create('TxnStandalone');
+    const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_USER_USER);
 
+    transaction.setValue('version', 1);
     transaction.setValue('type', $.TYPE_TXN_INSERT_USER_USER);
     transaction.set('data',
         $$.create('User')
@@ -139,8 +142,9 @@ export function createPublicUser(inputs: {
     userId: number
 }) {
     const [privateKey, publicKey] = secp256k1.getKeys();
-    const transaction = $$.create('TxnStandalone');
+    const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_USER_PUBLIC);
 
+    transaction.setValue('version', 1);
     transaction.setValue('type', $.TYPE_TXN_INSERT_USER_PUBLIC);
     transaction.set('data',
         $$.create('User')
@@ -176,10 +180,12 @@ export function removeUser(inputs: {
     targetBlockIndex: number,
     userId: number
 }) {
-    const transaction = $$.create('TxnStandalone');
+    const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_REMOVE_USER);
 
+    transaction.setValue('version', 1);
     transaction.setValue('type', $.TYPE_TXN_REMOVE_USER);
-    transaction.setValue('data', inputs.userId)
+    transaction.get('data').setValue('userId', inputs.userId);
+    transaction.get('data').setValue('reason', 0x00);
     transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
     transaction.setValue('author', inputs.parentId);
 

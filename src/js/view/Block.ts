@@ -14,6 +14,9 @@ export default class rBlock extends React.Component<{ block: Block }> {
 
         return $(
             ['div', { 'className': 'block' }, [
+                ['span', { 'className': 'block-version' }, [
+                    block.get('version').toBuffer().toString('hex')
+                ]],
                 ['span', { 'className': 'block-index' }, [
                     block.get('index').toBuffer().toString('hex')
                 ]],
@@ -24,7 +27,7 @@ export default class rBlock extends React.Component<{ block: Block }> {
                     block.get('previousBlockHash').toBuffer().toString('hex')
                 ]],
                 ['span', { 'className': 'block-bodySize' }, [
-                    BufferWrapper.numberToUleb128Buffer((block.get('body') as Blob).getSize()).toString('hex')
+                    block.get('transactionCount').toBuffer().toString('hex')
                 ]],
                 // ...block.getBody().map((txnData) => {
                 //     const txn = Txn.fromBuffer(txnData);

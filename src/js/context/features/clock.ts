@@ -30,11 +30,13 @@ export default function (refContext: unknown) {
 
             const nextCandidate = Block.create();
 
-            nextBlock.setIndex(nextBlock.getIndex() + 1);
-            nextBlock.setPreviousBlockHash(nextBlock.getHash());
+            nextCandidate.setIndex(nextBlock.getIndex() + 1);
+            nextCandidate.setPreviousBlockHash(nextBlock.getHash());
             context.insertWaitingTransactionsToBlock(nextCandidate);
 
             context.topBlock.candidate = nextCandidate;
+
+            setTimeout(afterPushBlockChain);
         }
     }
     function afterPushBlockChain() {
@@ -45,7 +47,6 @@ export default function (refContext: unknown) {
 
     // sprzwdza czy nie jesteśmy w tyle z wytworzeniem bloku
     function tick() {
-        console.log('tick');
         if (context.hasTopBlock() === true) {
             const currentTopBlock = context.getTopBlock();
             const currentIndex = context.getCurrentBlockIndex();
@@ -53,7 +54,7 @@ export default function (refContext: unknown) {
             if (currentIndex > currentTopBlock.getIndex()) {
                 syncPromise.reset();
                 syncLock = true;
-                setTimeout(() => pushBlockChain(), 0);
+                setTimeout(pushBlockChain);
             } else if (syncLock === true) {
                 syncLock = false;
                 syncPromise.resolve();
@@ -65,7 +66,7 @@ export default function (refContext: unknown) {
 
     let intervalId: unknown;
     context.events.on('init', () => {
-        intervalId = setInterval(tick, 100) as unknown;
+        intervalId = setInterval(tick, 300) as unknown;
     });
     context.events.on('destroy/before', () => {
         //@ts-ignore

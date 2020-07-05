@@ -13,7 +13,7 @@ export class Block extends structure({
   init() {
     super.init();
 
-    this.setValue('version', 0);
+    this.setValue('version', 1);
     this.setValue('index', 0);
     this.setValue('transactionCount', 0);
     this.setValue('previousBlockHash', EMPTY_BLOCK_HASH);
@@ -40,7 +40,7 @@ export class Block extends structure({
   getPreviousBlockHash() { return this.getValue('previousBlockHash'); }
   setPreviousBlockHash(value: BufferWrapper) { this.setValue('previousBlockHash', value); return this; }
   getCountOfTransactions() { return this.getValue('transactionCount'); }
-  getBody() { return this.getValue('body'); }
+  getBody() { return this.getValue('body') as BufferWrapper; }
 
   insertTransaction(
     txn: BufferWrapper
@@ -59,8 +59,14 @@ export class Block extends structure({
   }
 
   static create(buffer?: BufferWrapper) {
-    //@ts-ignore
-    return new Block(buffer);
+    const block = new Block();
+
+    block.init();
+    if (buffer) {
+      block.fromBuffer(buffer);
+    }
+
+    return block;
   }
   static fromBuffer(buffer: Buffer) {
     return Block.create().fromBuffer(BufferWrapper.create(buffer));

@@ -12,7 +12,7 @@ export function createGenesisiForFastTest() {
     const blockGenesis = Block.create() as Block;
 
     blockGenesis
-        .setValue('version', 0x00)
+        .setValue('version', 0x01)
         .setValue('index', 0x00)
         .setValue('time', Time.now());
 
