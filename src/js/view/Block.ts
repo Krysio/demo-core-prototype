@@ -2,7 +2,7 @@ import * as React from 'react';
 import $, { JsonNode } from 'react-json-syntax';
 import BufferWrapper from '@/libs/BufferWrapper';
 import { Block } from '@/models/block';
-import { Txn } from '@/models/transaction';
+import $$ from '@/models/structure';
 import rTxn from "@/view/Txn";
 import { Blob } from '@/models/structure';
 
@@ -26,18 +26,24 @@ export default class rBlock extends React.Component<{ block: Block }> {
                 ['span', { 'className': 'block-prevHash' }, [
                     block.get('previousBlockHash').toBuffer().toString('hex')
                 ]],
-                ['span', { 'className': 'block-bodySize' }, [
+                ['span', { 'className': 'block-txnCount' }, [
                     block.get('transactionCount').toBuffer().toString('hex')
                 ]],
-                // ...block.getBody().map((txnData) => {
-                //     const txn = Txn.fromBuffer(txnData);
-                //     const size = txnData.length;
+                ...(() => {
+                    const count = block.getValue('transactionCount');
+                    const body = block.get('body').getValue().seek(0);
 
-                //     return [rTxn, { txn, size }];
-                // })
-                ['span', [
-                    block.get('body').toBuffer().toString('hex')
-                ]],
+                    const txnList = [];
+                    for (let i = 0; i < count; i++) {
+                        const txn = $$.create('TxnInternal').fromBuffer(body);
+
+                        txnList.push([rTxn, { txn }]);
+                    }
+                    return txnList;
+                })(),
+                // ['span', [
+                //     block.get('body').toBuffer().toString('hex')
+                // ]],
             ]] as JsonNode
         );
     }

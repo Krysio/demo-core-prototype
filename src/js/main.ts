@@ -26,22 +26,15 @@ import {
     createAdmin, createUser, createPublicUser,
     removeUser
 } from '@/factories/txn';
-import { User, TYPE_USER_ROOT } from '@/models/user';
-
 
 const node = new Node();
 const genesis = createGenesisiForFastTest();
-const user = User.create(TYPE_USER_ROOT);
 
 Object.assign(global, {
     dev_node: node
 });
 
-user.setKey(genesis.rootKey.publicKey);
-console.log(
-    node, genesis,
-    user, User.fromBuffer(user.toBuffer())
-);
+
 node.takeBlock(genesis.blockGenesis);
 
 (async function () {

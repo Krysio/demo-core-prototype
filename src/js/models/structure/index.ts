@@ -11,6 +11,7 @@ export * from "./Author";
 export * from "./BlockIndex";
 export * from "./User";
 export * from "./Document";
+export * from "./txn";
 export * from "./Transaction";
 
 import { Uleb128 } from "./Uleb128";
@@ -37,7 +38,7 @@ const typeMap = {
 };
 type TypeMap = typeof typeMap;
 export default class Structure {
-    static create<Key extends keyof typeof typeMap, Type extends TypeMap[Key]>(key: Key) {
+    static create<K extends keyof typeof typeMap, Type extends TypeMap[K]>(key: K) {
         //@ts-ignore
         const instance = new typeMap[key]();
 

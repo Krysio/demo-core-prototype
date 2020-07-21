@@ -3,7 +3,7 @@ import * as UUID from "uuid";
 import Node from "@/models/node";
 import { Block } from "@/models/block";
 import { Config } from "@/models/Config";
-import { TxnStandalone } from "@/models/structure";
+import { TxnStandalone } from "@/models/structure/Transaction";
 
 import createStore from "./store";
 

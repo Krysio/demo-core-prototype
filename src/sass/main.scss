@@ -348,6 +348,18 @@ $jumbotron-bg: $bgSecondary;
 /** REPLACE BOOTSTRAP * END */
 /** CUSTOM STYLES * START */
 
+
+
+
+
+
+
+
+
+
+
+
+
 .node {
     width: 100%;
     line-height: 1.1;
@@ -361,9 +373,11 @@ $jumbotron-bg: $bgSecondary;
 }
 
 .block {
+    .block-version {color: rgb(255, 208, 0);}
     .block-index {color: rgb(255, 255, 255);}
     .block-time {color: rgb(56, 86, 255);}
     .block-prevHash {color: rgb(255, 0, 0);}
+    .block-txnCount {color: rgb(0, 200, 0);}
     .block-bodySize {color: rgb(200, 200, 200);}
 }
 .txn {
@@ -378,8 +392,34 @@ $jumbotron-bg: $bgSecondary;
     .txn-signature {color: rgb(0, 255, 0);}
     .txn-signedBlock-index {color: rgb(255, 0, 255);}
     .txn-signedBlock-hash {color: rgb(255, 0, 255);}
-    .txn-authorId {color: rgb(56, 86, 255);}
+    .txn-author {color: rgb(156, 0, 184);}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .react-tabs__tab-list {
     margin-bottom: 0;
@@ -679,59 +719,4 @@ img.img-flag {
         padding: 0.1em 0.4em;
         border: solid 1px $bgSecondary;
     }
-}
-
-.privacy-settings {
-    min-width: em(400, $baseSize);
-}
-.modal-gdrp {
-    font-size: 1.4em;
-    background-color: rgba($bgPrimary, 0.9);
-
-    .modal-content {
-        border: solid 0.2em $bgSecondary;
-    }
-
-    .modal-body {
-        padding: 1em 1.3em;
-    }
-
-    .modal-footer {
-        border-top: solid 0.2em $bgSecondary;
-    }
-}
-
-
-.info-village {
-    display: flex;
-    flex-direction: column;
-}
-.info-village > *,
-.info-village > * > * {
-    display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    white-space: nowrap;
-}
-
-.info-content {
-    display: flex;
-    flex-direction: column;
-}
-.info-content .list {
-    margin-top: 0.6em;
-    display: flex;
-    flex-direction: column;
-}
-.info-content .list > * {
-    padding: 0.2em 0.3em;
-    border: solid em(1.2, $baseSize) $bgSecondary;
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-}
-.info-content .list > * > * {
-    display: flex;
-    flex-wrap: nowrap;
-    white-space: nowrap;
 }
