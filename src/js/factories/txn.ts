@@ -204,3 +204,30 @@ export function removeUser(inputs: {
     };
 }
 
+export function insertDocument(inputs: {
+    parentId: number,
+    parentPrivateKey: BufferWrapper,
+    targetBlockHash: BufferWrapper
+}) {
+    const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_DOCUMENT);
+    const document = $$.create('Document');
+
+    transaction.setValue('version', 1);
+    transaction.setValue('type', $.TYPE_TXN_INSERT_DOCUMENT);
+    transaction.setValue('data', document);
+    transaction.setValue('signingBlockHash', inputs.targetBlockHash);
+    transaction.setValue('author', inputs.parentId);
+
+    const hash: Buffer = transaction.getHash();
+    transaction.set('signature', $$.create('Signature')
+        .setValue(secp256k1.sign(
+            inputs.parentPrivateKey,
+            hash
+        ) as BufferWrapper)
+    );
+
+    return {
+        transaction,
+        hash
+    };
+}
