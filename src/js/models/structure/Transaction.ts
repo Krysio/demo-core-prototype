@@ -36,7 +36,15 @@ export class TxnInternal extends typedStructure({
                 'data': Document,
                 'author': Author,
                 'signature': Signature
-            }) {}
+            }) {
+                verify() {
+                    // TODO author ma poparcie
+                    return true;
+                }
+                apply() {
+                    // save
+                }
+            }
         }
     }
 ) {
@@ -74,7 +82,12 @@ export class TxnStandalone extends typedStructure({
 
         [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends standaloneByUser({
             'data': Document
-        }) {}
+        }) {
+            verify() {
+                // TODO author ma poparcie
+                return true;
+            }
+        }
     }
 }) {
     isUserTransaction(): boolean {throw new Error();}

@@ -35,17 +35,15 @@ export class Document extends structure({
     'distribution': Uleb128,
 }) {
     isValid() {
-        let result = false;
-
         if (this.getValue('countOfOptions') < 1
             || this.getValue('countOfCredits') < 1
         ) {
-            result = false;
+            return false;
         }
         if (this.getValue('distribution') > 0xf) {
-            result = false;
+            return false;
         }
 
-        return result && super.isValid();
+        return super.isValid();
     }
 }

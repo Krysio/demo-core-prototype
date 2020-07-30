@@ -24,7 +24,7 @@ import Node from '@/models/node';
 import { createGenesisiForFastTest } from '@/factories/block';
 import {
     createAdmin, createUser, createPublicUser,
-    removeUser
+    removeUser, insertDocument
 } from '@/factories/txn';
 
 const node = new Node();
@@ -107,6 +107,19 @@ node.takeBlock(genesis.blockGenesis);
 
     node.takeTransaction(txnCreateUser3.transaction);
     node.takeTransaction(txnRemoveUser.transaction);
+
+    await new Promise((r) => setTimeout(r, 5e3));
+
+    topBlock = node.getCurrentTopBlock();
+
+    const txnDocument1 = insertDocument({
+        authorId: txnCreateUser3.id,
+        authorPrivateKey: txnCreateUser3.privateKey,
+        targetBlockHash: topBlock.getHash(),
+        documentContent: 'President candidate'
+    });
+
+    node.takeTransaction(txnDocument1.transaction);
 })();
 
 //#region React

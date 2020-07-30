@@ -1,4 +1,5 @@
 import BufferWrapper from "@/libs/BufferWrapper";
+import * as sha256 from "@/services/crypto/sha256";
 import { structure, typedStructure } from "./base";
 import { Blob } from "./Blob";
 
@@ -18,11 +19,20 @@ export class Sha256 extends Blob {
 }
 
 export const Hash = typedStructure({
-        'type': {
-            [TYPE_HASH_Sha256]: structure({
-                'data': Sha256
-            })
+    'type': {
+        [TYPE_HASH_Sha256]: class HashSha256 extends structure({
+            'data': Sha256
+        }) {
+            setHashFromString(value: string) {
+                const hash = new sha256.HashSum();
+
+                hash.push(Buffer.from(value, 'utf8'));
+                this.setValue('data', BufferWrapper.create(hash.get()));
+
+                return this;
+            }
         }
+    }
 });
 
 export { Sha256 as BlockHash }

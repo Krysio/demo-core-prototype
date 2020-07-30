@@ -205,28 +205,40 @@ export function removeUser(inputs: {
 }
 
 export function insertDocument(inputs: {
-    parentId: number,
-    parentPrivateKey: BufferWrapper,
-    targetBlockHash: BufferWrapper
+    authorId: number,
+    authorPrivateKey: Buffer,
+    targetBlockHash: BufferWrapper,
+    documentContent: string
 }) {
     const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_DOCUMENT);
     const document = $$.create('Document');
+    const fileHash = $$.create('Hash').setValue('type', $.TYPE_HASH_Sha256);
+    
+    document.setValue('authorId', inputs.authorId);
+    document.setValue('countOfCredits', 1);
+    document.setValue('countOfOptions', 1);
+    document.setValue('distribution', $.FLAG_DOCUMENT_DISABLE_FLOW );
+    document.setValue('fileType', $.FILE_FORMAT_TXT);
+    document.set('fileHash', fileHash.setHashFromString(inputs.documentContent));
+    document.setValue('timeEnd', Date.now() + 1e3 * 60);
 
     transaction.setValue('version', 1);
     transaction.setValue('type', $.TYPE_TXN_INSERT_DOCUMENT);
-    transaction.setValue('data', document);
+    transaction.set('data', document);
     transaction.setValue('signingBlockHash', inputs.targetBlockHash);
-    transaction.setValue('author', inputs.parentId);
+    transaction.setValue('author', inputs.authorId);
 
     const hash: Buffer = transaction.getHash();
     transaction.set('signature', $$.create('Signature')
         .setValue(secp256k1.sign(
-            inputs.parentPrivateKey,
+            inputs.authorPrivateKey,
             hash
         ) as BufferWrapper)
     );
 
     return {
+        documentContent: inputs.documentContent,
+        document,
         transaction,
         hash
     };

@@ -21,7 +21,7 @@ export class Block extends structure({
     return this;
   }
 
-  getHash() {
+  getHash(): BufferWrapper {
     const hash = new HashSum();
 
     hash.push(this.get('version').toBuffer());

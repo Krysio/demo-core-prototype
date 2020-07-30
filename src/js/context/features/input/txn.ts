@@ -1,6 +1,7 @@
 import { Context } from "@/context";
 import { TxnStandalone, BlockIndex, BlockHash } from "@/models/structure";
 import Time from "@/services/Time";
+import BufferWrapper from "@/libs/BufferWrapper";
 
 /******************************/
 
@@ -56,10 +57,16 @@ export default function (rawContext: unknown) {
                 return;
             }
 
-            if (firstTopBlock === signedBlock
+            if (
+                BufferWrapper.compare(
+                    firstTopBlock.getHash(),
+                    signingHash
+                ) === 0
                 || (
-                    context.hasSecondTopBlock() === true
-                    && secondTopBlock === signedBlock
+                    BufferWrapper.compare(
+                        secondTopBlock.getHash(),
+                        signingHash
+                    ) === 0
                     && Time.now() < firstTopBlock.getTime() + timeLimit
                 )
             ) {

@@ -5,6 +5,8 @@ import Structure, {
 
     TYPE_USER_ROOT
 } from "../";
+import { Block } from "../../Block";
+import { EMPTY_BLOCK_HASH } from "../Hash";
 
 /******************************/
 
@@ -269,6 +271,28 @@ describe('node', () => {
             ).toBe(
                 txnInternalFromStandalone.toBuffer.toString()
             );
+        });
+    });
+    describe('Block', () => {
+        it('empty', () => {
+            const block = new Block();
+
+            block.init();
+            block.setValue('version', 1);
+            block.setValue('index', 32);
+            block.setValue('previousBlockHash', EMPTY_BLOCK_HASH);
+            block.setValue('time', Date.now());
+            block.setValue('transactionCount', 0);
+
+            const hash = block.getHash();
+            const buffer1 = block.toBuffer();
+            const block2 = Block.fromBuffer(buffer1);
+            const buffer2 = block2.toBuffer();
+
+            expect(BufferWrapper.compare(
+                buffer1,
+                buffer2
+            )).toBe(0);
         });
     });
 });
