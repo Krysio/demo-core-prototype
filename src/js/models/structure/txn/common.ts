@@ -53,3 +53,18 @@ export function standaloneByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
         }
     };
 }
+
+export function internalByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
+    return class TxnByUser extends structure({
+        ...schema,
+        'author': Author,
+        'signature': Signature
+    }) {
+        isUserTransaction() {return true;}
+        isAdminTransaction() {return false;}
+        async verifyPrepareInputs(context: Context) {
+            const author = await context.getUserById(this.getValue('author'));
+            return { author };
+        }
+    };
+}

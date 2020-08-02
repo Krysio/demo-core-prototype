@@ -12,7 +12,7 @@ import { HashSum } from "@/services/crypto/sha256";
 import BufferWrapper from "@/libs/BufferWrapper";
 
 import {
-    standaloneByUser,
+    standaloneByUser, internalByUser,
     internalInitial,
     internalCreateUser, standaloneCreateUser,
     internalRemoveUser, standaloneRemoveUser
@@ -21,6 +21,9 @@ import {
 /******************************/
 
 export const TYPE_TXN_INSERT_DOCUMENT = 48;
+export const TYPE_TXN_INSERT_ENDORSING = 86;
+export const TYPE_TXN_REMOVE_ENDORSING = 87;
+export const TYPE_TXN_REPLACE_ENDORSING = 88;
 
 /******************************/
 
@@ -32,13 +35,47 @@ export class TxnInternal extends typedStructure({
             ...internalCreateUser,
             ...internalRemoveUser,
 
-            [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends standaloneByUser({
-                'data': Document,
-                'author': Author,
-                'signature': Signature
+            [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends internalByUser({
+                'data': Document
             }) {
                 verify() {
                     // TODO author ma poparcie
+                    return true;
+                }
+                apply() {
+                    // save
+                }
+            },
+
+            [TYPE_TXN_INSERT_ENDORSING]: class TxnInsertEndorsing extends internalByUser({
+                'userId': Uleb128
+            }) {
+                verify() {
+                    // TODO user istnieje i jest to user lub public, limit slotów
+                    return true;
+                }
+                apply() {
+                    // save
+                }
+            },
+            [TYPE_TXN_REMOVE_ENDORSING]: class TxnRemoveEndorsing extends internalByUser({
+                'userId': Uleb128
+            }) {
+                verify() {
+                    // TODO id jest na liście poparcia
+                    return true;
+                }
+                apply() {
+                    // save
+                }
+            },
+            [TYPE_TXN_REPLACE_ENDORSING]: class TxnReplaceEndorsing extends internalByUser({
+                'fromUserId': Uleb128,
+                'toUserId': Uleb128
+            }) {
+                verify() {
+                    // TODO user istnieje i jest to user lub public
+                    // TODO id jest na liście poparcia
                     return true;
                 }
                 apply() {
@@ -85,6 +122,33 @@ export class TxnStandalone extends typedStructure({
         }) {
             verify() {
                 // TODO author ma poparcie
+                return true;
+            }
+        },
+
+        [TYPE_TXN_INSERT_ENDORSING]: class TxnInsertEndorsing extends standaloneByUser({
+            'userId': Uleb128
+        }) {
+            verify() {
+                // TODO user istnieje i jest to user lub public, limit slotów
+                return true;
+            }
+        },
+        [TYPE_TXN_REMOVE_ENDORSING]: class TxnRemoveEndorsing extends standaloneByUser({
+            'userId': Uleb128
+        }) {
+            verify() {
+                // TODO id jest na liście poparcia
+                return true;
+            }
+        },
+        [TYPE_TXN_REPLACE_ENDORSING]: class TxnReplaceEndorsing extends standaloneByUser({
+            'fromUserId': Uleb128,
+            'toUserId': Uleb128
+        }) {
+            verify() {
+                // TODO user istnieje i jest to user lub public
+                // TODO id jest na liście poparcia
                 return true;
             }
         }

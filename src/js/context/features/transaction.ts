@@ -15,6 +15,7 @@ export default function (refContext: unknown) {
         ) {
             const index = block.getIndex() - 2;
             const ref = context.waitedTransactionsSigningBlockIndex[index];
+
             if (ref) {
                 for (let txn of ref) {
                     const txnBuffer = Structure
@@ -41,8 +42,8 @@ export default function (refContext: unknown) {
                     if (key !== null) {
                         const keyString = key.toString('hex');
                         const ref = context.waitedTransactionsSigningBlockHash[keyString];
+
                         if (ref) {
-                            console.log(ref);
                             for (let txn of ref) {
                                 block.insertTransaction(
                                     Structure
