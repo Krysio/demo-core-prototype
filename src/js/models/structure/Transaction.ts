@@ -15,15 +15,15 @@ import {
     standaloneByUser, internalByUser,
     internalInitial,
     internalCreateUser, standaloneCreateUser,
-    internalRemoveUser, standaloneRemoveUser
+    internalRemoveUser, standaloneRemoveUser,
+    internalEndoring, externalEndorsing
 } from "./txn";
 
 /******************************/
 
 export const TYPE_TXN_INSERT_DOCUMENT = 48;
-export const TYPE_TXN_INSERT_ENDORSING = 86;
-export const TYPE_TXN_REMOVE_ENDORSING = 87;
-export const TYPE_TXN_REPLACE_ENDORSING = 88;
+export const TYPE_TXN_VOTE = 64;
+export const TYPE_TXN_BIND = 65;
 
 /******************************/
 
@@ -34,6 +34,7 @@ export class TxnInternal extends typedStructure({
             ...internalInitial,
             ...internalCreateUser,
             ...internalRemoveUser,
+            ...internalEndoring,
 
             [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends internalByUser({
                 'data': Document
@@ -46,42 +47,20 @@ export class TxnInternal extends typedStructure({
                     // save
                 }
             },
-
-            [TYPE_TXN_INSERT_ENDORSING]: class TxnInsertEndorsing extends internalByUser({
-                'userId': Uleb128
+            
+            [TYPE_TXN_BIND]: class TxnInsertDocument extends internalByUser({
+                'data': structure({
+                    'userId': Uleb128
+                })
             }) {
                 verify() {
-                    // TODO user istnieje i jest to user lub public, limit slotów
+                    // TODO author ma poparcie
                     return true;
                 }
                 apply() {
                     // save
                 }
             },
-            [TYPE_TXN_REMOVE_ENDORSING]: class TxnRemoveEndorsing extends internalByUser({
-                'userId': Uleb128
-            }) {
-                verify() {
-                    // TODO id jest na liście poparcia
-                    return true;
-                }
-                apply() {
-                    // save
-                }
-            },
-            [TYPE_TXN_REPLACE_ENDORSING]: class TxnReplaceEndorsing extends internalByUser({
-                'fromUserId': Uleb128,
-                'toUserId': Uleb128
-            }) {
-                verify() {
-                    // TODO user istnieje i jest to user lub public
-                    // TODO id jest na liście poparcia
-                    return true;
-                }
-                apply() {
-                    // save
-                }
-            }
         }
     }
 ) {
@@ -116,6 +95,7 @@ export class TxnStandalone extends typedStructure({
     'type': {
         ...standaloneCreateUser,
         ...standaloneRemoveUser,
+        ...externalEndorsing,
 
         [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends standaloneByUser({
             'data': Document
@@ -126,29 +106,13 @@ export class TxnStandalone extends typedStructure({
             }
         },
 
-        [TYPE_TXN_INSERT_ENDORSING]: class TxnInsertEndorsing extends standaloneByUser({
-            'userId': Uleb128
+        [TYPE_TXN_BIND]: class TxnBind extends standaloneByUser({
+            'data': structure({
+                'userId': Uleb128
+            })
         }) {
             verify() {
-                // TODO user istnieje i jest to user lub public, limit slotów
-                return true;
-            }
-        },
-        [TYPE_TXN_REMOVE_ENDORSING]: class TxnRemoveEndorsing extends standaloneByUser({
-            'userId': Uleb128
-        }) {
-            verify() {
-                // TODO id jest na liście poparcia
-                return true;
-            }
-        },
-        [TYPE_TXN_REPLACE_ENDORSING]: class TxnReplaceEndorsing extends standaloneByUser({
-            'fromUserId': Uleb128,
-            'toUserId': Uleb128
-        }) {
-            verify() {
-                // TODO user istnieje i jest to user lub public
-                // TODO id jest na liście poparcia
+                // TODO author ma poparcie
                 return true;
             }
         }
