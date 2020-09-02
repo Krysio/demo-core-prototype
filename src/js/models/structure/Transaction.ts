@@ -1,5 +1,5 @@
 import { structure, typedStructure } from "./base";
-import { Uleb128 } from "./Uleb128";
+import { Uleb128, ArrayOfUleb128 } from "./Uleb128";
 import { BlockHash } from "./Hash";
 import { Author } from "./Author";
 import { Signature } from "./Signature";
@@ -47,8 +47,23 @@ export class TxnInternal extends typedStructure({
                     // save
                 }
             },
-            
-            [TYPE_TXN_BIND]: class TxnInsertDocument extends internalByUser({
+
+            [TYPE_TXN_VOTE]: class TxnVote extends internalByUser({
+                'data': structure({
+                    'documentId': Uleb128,
+                    'votes': ArrayOfUleb128
+                })
+            }) {
+                verify() {
+                    // TODO author ma poparcie
+                    return true;
+                }
+                apply() {
+                    // save
+                }
+            },
+
+            [TYPE_TXN_BIND]: class TxnBind extends internalByUser({
                 'data': structure({
                     'userId': Uleb128
                 })
