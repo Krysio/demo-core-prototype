@@ -55,6 +55,9 @@ export class Config {
     getConfigBlockFrequency() {
         return this.configBlockFrequency;
     }
+    getEdorsingLimit() {
+        return 8;
+    }
 
     /******************************/
 

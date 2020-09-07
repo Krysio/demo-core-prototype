@@ -3,7 +3,7 @@ import { Author } from "../Author";
 import { BlockIndex } from "../BlockIndex";
 import { BlockHash } from "../Hash";
 import { Signature } from "../Signature";
-import { User, TYPE_USER_ADMIN } from "../User";
+import { User, TYPE_USER_ADMIN, TYPE_USER_USER } from "../User";
 import { Context } from "@/context";
 
 /******************************/
@@ -50,6 +50,18 @@ export function standaloneByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
         async verifyPrepareInputs(context: Context) {
             const author = await context.getUserById(this.getValue('author'));
             return { author };
+        }
+        verify(inputs: {
+            author: User;
+        }) {
+            if (inputs.author === null) return false;
+
+            const author = inputs.author.asType(TYPE_USER_USER);
+
+            if (!author.isUser()) {
+                return false;
+            }
+            return true;
         }
     };
 }

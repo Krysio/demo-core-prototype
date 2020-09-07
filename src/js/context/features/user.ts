@@ -17,6 +17,11 @@ export default function(rawContext: unknown) {
 
             return $$.create('User').fromBuffer(buffUser.seek(0));
         },
+        async getUserEndorsingListById(
+            userId: number
+        ) {
+            return [];
+        },
         storeUserWithId(
             userId: number,
             buffUser: BufferWrapper

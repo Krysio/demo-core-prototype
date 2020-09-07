@@ -83,7 +83,7 @@ export default function (rawContext: unknown) {
 
         const inputs = await txn.verifyPrepareInputs(context);
 
-        if (txn.verify(inputs)) {
+        if (await txn.verify(inputs)) {
             context.events.emit('node/txn/verify/accept', txn);
             return;
         }
