@@ -135,7 +135,7 @@ export class TxnStandalone extends typedStructure({
 }) {
     isUserTransaction(): boolean {throw new Error();}
     isAdminTransaction(): boolean {throw new Error();}
-    verifyPrepareInputs(context: Context) {return {};}
+    async verifyPrepareInputs(context: Context) {return {};}
     verify(inputs: any): boolean {throw new Error();}
     getHash() {
         const hash = new HashSum();

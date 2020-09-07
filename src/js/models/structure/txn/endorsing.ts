@@ -3,7 +3,7 @@ import { Uleb128 } from "../Uleb128";
 import { internalByUser, standaloneByUser } from "./common";
 import { Context } from "@/context";
 import { User, TYPE_USER_USER, TYPE_USER_PUBLIC } from "../User";
-import { Config } from "@/models/Config";
+import { Config } from "../../Config";
 
 /******************************/
 

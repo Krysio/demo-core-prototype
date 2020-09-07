@@ -8,6 +8,7 @@ import { TxnStandalone } from "@/models/structure/Transaction";
 import createStore from "./store";
 
 import createFeatures from "./features";
+import BufferWrapper from "@/libs/BufferWrapper";
 
 /******************************/
 
@@ -34,7 +35,13 @@ export default function createContext(
         'db/keys/ready': [],
 
         'input/block': [Block],
-        'input/txn': [TxnStandalone]
+        'input/txn': [TxnStandalone],
+
+        'node/parser/txn/in': [BufferWrapper],
+        'node/parser/txn/out': [TxnStandalone],
+        'node/validator/txn/in': [TxnStandalone],
+        'node/validator/txn/out/admin': [TxnStandalone],
+        'node/validator/txn/out/user': [TxnStandalone],
     }>;
 
     if (process.env.NODE_ENV !== "production") {

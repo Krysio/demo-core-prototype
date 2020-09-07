@@ -40,7 +40,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-json-syntax": "^0.1.0",
-    "ts-jest": "^24.0.2",
+    "ts-jest": "^26.3.0",
     "ts-loader": "^7.0.3",
     "typescript": "^3.8.3",
     "uuid": "^8.0.0",
