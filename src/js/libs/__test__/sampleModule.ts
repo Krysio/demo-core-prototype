@@ -1,10 +1,9 @@
-export type inType = Buffer;
-export type outType = string;
+import { createNode } from "../Node";
 
-export function main(inputValue: inType): outType {
-  return inputValue.toString('hex');
+export default function(context: {}) {
+  return createNode((inputValue: Buffer) => {
+    return inputValue.toString('hex');
+  }, {
+    test() { return 'ABCDEF'; }
+  });
 }
-
-export const api = {
-  test: () => 'ABCDEF'
-};

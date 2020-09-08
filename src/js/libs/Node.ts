@@ -1,26 +1,24 @@
 import { EventEmitter } from "events";
-import { types } from "@babel/core";
 
-type moduleStruct<T_in, T_out> = {
-  main: (T_in) => T_out,
-  api?: {[key: string]: (...any) => any}
-};
-
-export function createNode<T_in, T_out>(
-  name: string,
-  module: moduleStruct<T_in, T_out>
+export function createNode<
+  T_in extends any,
+  T_out extends any,
+  T_api extends { [Key in keyof T_api]: T_api[Key] }
+>(
+  main: (inputValue: T_in) => T_out,
+  api?: T_api 
 ) {
   const events = new EventEmitter();
 
   return {
     in(inputValue: T_in) {
-      events.emit('output', module.main(inputValue));
+      events.emit('output', main(inputValue));
     },
     out(
       handler: (outputValue: T_out) => void
     ) {
       events.on('output', handler);
     },
-    api: module.api
+    api
   };
 }

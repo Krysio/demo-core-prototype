@@ -2,7 +2,7 @@ import BufferWrapper from "@/libs/BufferWrapper";
 import { HashSum } from "@/services/crypto/sha256";
 import { structure } from "../base";
 import { Uleb128 } from "../Uleb128";
-import { User, TYPE_USER_ADMIN, TYPE_USER_USER, TYPE_USER_PUBLIC } from "../User";
+import { User, TYPE_USER_ADMIN, TYPE_USER_USER, TYPE_USER_PUBLIC, TYPE_USER_ROOT } from "../User";
 import { Author } from "../Author";
 import { Signature } from "../Signature";
 import { Block } from "../../Block";
@@ -223,3 +223,48 @@ export const standaloneCreateUser = {
         }
     }
 };
+
+/******************************/
+
+import { ruleTxnAuthorUserType, ruleTxnVerify } from "@/context/rules";
+import { TxnStandalone } from "../Transaction";
+
+ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_USER_ADMIN, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);
+ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_USER_USER, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);
+ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_USER_PUBLIC, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);
+
+const userNotExistInSystem = async (
+    txn: TxnStandalone,
+    ctx: Context,
+    scope: {[key: string]: any}
+) => {
+    scope.userFromSystem = scope.userFromSystem || await ctx.getUserById(
+        txn.get('data', User).getValue('userId', Uleb128)
+    );
+
+    return scope.userFromSystem === null;
+};
+const insertingAdminHasLowerLevel = async (
+    txn: TxnStandalone,
+    ctx: Context,
+    scope: {[key: string]: any}
+) => {
+    scope.author = scope.author || await ctx.getUserById(
+        this.getValue('author')
+    );
+    
+    const user = txn.get('data', User).asType(TYPE_USER_ADMIN);
+
+    return scope.author.getValue('level') >= user.getValue('level')
+};
+
+ruleTxnVerify.set(TYPE_TXN_INSERT_USER_ADMIN, [
+    userNotExistInSystem,
+    insertingAdminHasLowerLevel
+]);
+ruleTxnVerify.set(TYPE_TXN_INSERT_USER_USER, [
+    userNotExistInSystem
+]);
+ruleTxnVerify.set(TYPE_TXN_INSERT_USER_PUBLIC, [
+    userNotExistInSystem
+]);

@@ -1,12 +1,10 @@
-import { createNode } from "../Node";
-import * as sampleModule from "./sampleModule";
+import sampleModule from "./sampleModule";
 
 describe('main', () => {
   it('create module', (done) => {
-    const module = createNode<sampleModule.inType, sampleModule.outType>('sample-module', sampleModule);
+    const module = sampleModule({});
 
     const testBuff = Buffer.from('FA', 'hex');
-
     
     expect(module.api.test()).toBe('ABCDEF');
 
