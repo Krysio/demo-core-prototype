@@ -2,7 +2,7 @@ import BufferWrapper from "@/libs/BufferWrapper";
 import { HashSum } from "@/services/crypto/sha256";
 import { structure } from "../base";
 import { Uleb128 } from "../Uleb128";
-import { User, TYPE_USER_ADMIN } from "../User";
+import { User, TYPE_USER_ADMIN, TYPE_USER_USER, TYPE_USER_PUBLIC } from "../User";
 import { Author } from "../Author";
 import { Signature } from "../Signature";
 import { Block } from "../../Block";
@@ -16,7 +16,7 @@ class TxnInternalInsertUser extends structure({
     'author': Author,
     'signature': Signature
 }) {
-    async verifyPrepareInputs(
+    public async verifyPrepareInputs(
         context: Context,
         selfBlock: Block
     ) {
@@ -34,7 +34,7 @@ class TxnInternalInsertUser extends structure({
         );
         return { author, userById, selfBlock, signingBlock };
     }
-    verify(inputs: {
+    public verify(inputs: {
         author: User;
         userById: User;
         selfBlock: Block;
@@ -68,7 +68,7 @@ class TxnInternalInsertUser extends structure({
 
         return true;
     }
-    getHash(
+    public getHash(
         selfBlock: Block,
         signingBlock: Block,
         signingValue: 'index' | 'hash'
@@ -98,27 +98,30 @@ class TxnInternalInsertUser extends structure({
     }
 }
 
-class TxnStandaloneInsertUser extends standaloneByAdmin({
+const TxnStandaloneByAdmin = standaloneByAdmin({
     'data': User
-}) {
-    public verify(inputs: {
-        author: User;
-        userById: User;
-    }) {
-        if (inputs.userById !== null) {
-            return false;
-        }
+});
+class TxnStandaloneInsertUser extends TxnStandaloneByAdmin {
+    protected verifyInputs = {
+        author: null as User,
+        userFromSystem: null as User
+    };
+    public verify(inputs: TxnStandaloneInsertUser['verifyInputs']) {
+        const { userFromSystem } = this.verifyInputs;
+
+        // user nie moze istniec w systemie
+        if (userFromSystem !== null) return false;
         return super.verify(inputs);
     }
-    async verifyPrepareInputs(context: Context) {
-        const author = await context.getUserById(
-            this.getValue('author')
-        );
-        const userById = await context.getUserById(
+    public async verifyPrepareInputs(context: Context) {
+        await super.verifyPrepareInputs(context);
+
+        this.verifyInputs.userFromSystem = await context.getUserById(
             this.get('data', User)
             .getValue('userId', Uleb128)
         );
-        return { author, userById };
+
+        return this.verifyInputs;
     }
     public getInsertingUser() {
         return this.get('data');
@@ -135,25 +138,19 @@ export const TYPE_TXN_INSERT_USER_PUBLIC = 18;
 
 export const internalCreateUser = {
     [TYPE_TXN_INSERT_USER_ADMIN]: class TxnInsertUserAdmin extends TxnInternalInsertUser {
-        isValid() {
+        public isValid() {
             const user = this.get('data') as User;
             return user.isAdmin() && super.isValid();
         }
     },
     [TYPE_TXN_INSERT_USER_USER]: class TxnInsertUserUser extends TxnInternalInsertUser {
-        isValid() {
+        public isValid() {
             const user = this.get('data') as User;
             return user.isUser() && super.isValid();
         }
-        /** TODO
-         * verify:
-         * wartości z configa
-         *  - odpowiedni przedział czasowy ważności klucza
-         *  - odpowiedni odstęp czasowy od wstawienia klucza do jego uruchomienia
-        */
     },
     [TYPE_TXN_INSERT_USER_PUBLIC]: class TxnInsertUserPublic extends TxnInternalInsertUser {
-        isValid() {
+        public isValid() {
             const user = this.get('data') as User;
             return user.isPublic() && super.isValid();
         }
@@ -162,52 +159,65 @@ export const internalCreateUser = {
 
 export const standaloneCreateUser = {
     [TYPE_TXN_INSERT_USER_ADMIN]: class TxnInsertUserAdmin extends TxnStandaloneInsertUser {
-        verify(
-            inputs: {
-                author: User;
-                userById: User;
-            }
+        public verify(
+            inputs: TxnStandaloneInsertUser['verifyInputs']
         ) {
-            // dziedziczenie
-            if (!super.verify(inputs)) {
-                return false;
-            }
+            if (!super.verify(inputs)) return false;
 
-            const author = inputs.author.asType(TYPE_USER_ADMIN);
+            const author = this.verifyInputs.author.asType(TYPE_USER_ADMIN);
             const user = this.get('data', User);
 
             // wstawiany typ: admin
-            if (!user.isType(TYPE_USER_ADMIN)) {
-                return false;
-            }
+            if (!user.isType(TYPE_USER_ADMIN)) return false;
             // dodawany admin tylko niższej rangi
-            if (author.getValue('level') >= user.getValue('level')) {
-                return false;
-            }
-            // podpis
-            if (!author.get('key').verify(
-                //@ts-ignore
-                this.getHash(),
-                this.getValue('signature')
-            )) {
-                return false;
-            }
+            if (author.getValue('level') >= user.getValue('level')) return false;
 
             return true;
         }
-        isValid() {
+        public isValid() {
             const user = this.getInsertingUser();
             return user.isAdmin() && super.isValid();
         }
     },
     [TYPE_TXN_INSERT_USER_USER]: class TxnInsertUserUser extends TxnStandaloneInsertUser {
-        isValid() {
+        public verify(
+            inputs: TxnStandaloneInsertUser['verifyInputs']
+        ) {
+            if (!super.verify(inputs)) return false;
+
+            const user = this.get('data', User);
+
+            // wstawiany typ: user
+            if (!user.isType(TYPE_USER_USER)) return false;
+                
+            /** TODO
+             * verify:
+             * wartości z configa
+             *  - odpowiedni przedział czasowy ważności klucza
+             *  - odpowiedni odstęp czasowy od wstawienia klucza do jego uruchomienia
+            */
+
+            return true;
+        }
+        public isValid() {
             const user = this.getInsertingUser();
             return user.isUser() && super.isValid();
         }
     },
     [TYPE_TXN_INSERT_USER_PUBLIC]: class TxnInsertUserPublic extends TxnStandaloneInsertUser {
-        isValid() {
+        public verify(
+            inputs: TxnStandaloneInsertUser['verifyInputs']
+        ) {
+            if (!super.verify(inputs)) return false;
+
+            const user = this.get('data', User);
+
+            // wstawiany typ: public
+            if (!user.isType(TYPE_USER_PUBLIC)) return false;
+
+            return true;
+        }
+        public isValid() {
             const user = this.getInsertingUser();
             return user.isPublic() && super.isValid();
         }

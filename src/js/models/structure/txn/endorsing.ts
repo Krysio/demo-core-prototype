@@ -73,7 +73,8 @@ export const externalEndorsing = {
             'userId': Uleb128
         })
     }) {
-        async verifyPrepareInputs(
+        // ts has a problem :(
+        public async ['verifyPrepareInputs' as ':/'](
             context: Context
         ) {
             const parentInputs = await super.verifyPrepareInputs(context);
@@ -81,7 +82,7 @@ export const externalEndorsing = {
 
             return { ...parentInputs, ...inputs };
         }
-        verify(inputs: {
+        public verify(inputs: {
             author: User,
             user: User,
             config: Config,
@@ -106,7 +107,8 @@ export const externalEndorsing = {
             'userId': Uleb128
         })
     }) {
-        async verifyPrepareInputs(
+        // ts has a problem :(
+        public async ['verifyPrepareInputs' as ':/'](
             context: Context
         ) {
             const parentInputs = await super.verifyPrepareInputs(context);
@@ -114,12 +116,12 @@ export const externalEndorsing = {
 
             return { ...parentInputs, ...inputs };
         }
-        verify(inputs: {
+        public verify(inputs: {
             author: User,
             user: User
         }) {
             if (!super.verify(inputs)) return false;
-            // TODO id jest na liście poparcia
+            // id jest na liście poparcia
             return true;
         }
     },
@@ -129,7 +131,8 @@ export const externalEndorsing = {
             'userId': Uleb128
         })
     }) {
-        async verifyPrepareInputs(
+        // ts has a problem :(
+        public async ['verifyPrepareInputs' as ':/'](
             context: Context
         ) {
             const parentInputs = await super.verifyPrepareInputs(context);
@@ -141,7 +144,7 @@ export const externalEndorsing = {
                 currentId: this.get('data').getValue('fromUserId')
             };
         }
-        verify(inputs: {
+        public verify(inputs: {
             author: User,
             user: User,
             currentId: number

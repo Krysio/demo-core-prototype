@@ -70,4 +70,8 @@ export class User extends typedStructure({
         const type = this.get("type").getValue() as number;
         return type === TYPE_USER_PUBLIC;
     }
+    isUserLike() {
+        const type = this.get("type").getValue() as number;
+        return type === TYPE_USER_USER || type === TYPE_USER_PUBLIC;
+    }
 }

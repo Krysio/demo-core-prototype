@@ -18,6 +18,7 @@ import {
     internalRemoveUser, standaloneRemoveUser,
     internalEndoring, externalEndorsing
 } from "./txn";
+import { User } from "./User";
 
 /******************************/
 
@@ -133,11 +134,13 @@ export class TxnStandalone extends typedStructure({
         }
     }
 }) {
-    isUserTransaction(): boolean {throw new Error();}
-    isAdminTransaction(): boolean {throw new Error();}
-    async verifyPrepareInputs(context: Context) {return {};}
-    verify(inputs: any): boolean {throw new Error();}
-    getHash() {
+    // virtual methods
+    public isUserTransaction(): boolean {throw new Error();}
+    public isAdminTransaction(): boolean {throw new Error();}
+    public async verifyPrepareInputs(context: Context) {throw new Error();}
+    public verify(inputs: any): boolean {throw new Error();}
+
+    public getHash() {
         const hash = new HashSum();
 
         hash.push(this.get('version').toBuffer());

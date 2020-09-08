@@ -21,7 +21,7 @@ export const internalRemoveUser = {
         'author': Author,
         'signature': Signature
     }) {
-        apply(context: Context) {
+        public apply(context: Context) {
             const userId = this.get('data').getValue('userId');
             context.removeUserById(userId);
         }
@@ -35,7 +35,8 @@ export const standaloneRemoveUser = {
             'reason': Uleb128
         })
     }) {
-        async ['verifyPrepareInputs' as 'ts has a problem :('](context: Context) {
+        // ts has a problem :(
+        public async ['verifyPrepareInputs' as ':/'](context: Context) {
             const author = await context.getUserById(
                 this.getValue('author')
             );
