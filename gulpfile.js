@@ -189,11 +189,35 @@ let developTask = gulp.series(
     }
 );
 
+const serveTask = gulp.series(() => {
+    let bs = browserSync.create();
+
+    bs.init({
+        server: {
+            baseDir: `${ DIR_BUILD }/static/${ ENV }`,
+            index: 'index.html',
+            middleware: [
+                historyFallback()
+            ]
+        },
+        //@ts-ignore
+        serveStatic: [
+            `${ DIR_BUILD }/static/${ ENV }`,
+            `${ DIR_BUILD }/static/common`,
+            // {
+            //     route: '/data',
+            //     dir: config['DIR_DATA']
+            // }
+        ]
+    });
+});
+
 Object.assign(exports, {
     default: mainTask,
     html: taskHtml,
     sass: taskSass,
     js: taskJs,
     watch: taskWatch,
-    develop: developTask
+    develop: developTask,
+    serve: serveTask
 });
