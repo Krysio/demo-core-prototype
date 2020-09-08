@@ -5,7 +5,6 @@
 const fs = require('fs');
 const path = require('path');
 const gulp = require('gulp');
-const sass = require('gulp-sass');
 const sourcemaps = require('gulp-sourcemaps');
 const browserSync = require('browser-sync');
 const webpack = require('webpack');
@@ -56,8 +55,10 @@ function taskHtml() {
 }
 
 // SASS
-
+let sass = null;
 function taskSass() {
+    sass = sass || require('gulp-sass');
+    
     return gulp.src('src/sass/*.scss')
         .pipe(sourcemaps.init())
         .pipe(sass.sync().on('error', sass.logError))
