@@ -9,6 +9,9 @@ import createStore from "./store";
 
 import createFeatures from "./features";
 import BufferWrapper from "@/libs/BufferWrapper";
+import moduleTxnParser from "./modules/txnParser";
+import moduleTxnValidator from "./modules/txnValidator";
+import moduleTxnVerifier from "./modules/txnVerifier";
 
 /******************************/
 
@@ -59,10 +62,25 @@ export default function createContext(
     setTimeout(() => events.emit('init'));
 
     const rawContext = { uuid, events };
+    
+    const txnParser = moduleTxnParser(rawContext);
+    const txnValidator = moduleTxnValidator(rawContext);
+    const txnVerifier = moduleTxnVerifier(rawContext);
+
+    // parser -> validator
+    txnParser.out(txnValidator.in);
+    // validator -> log
+    txnValidator.out(txnVerifier.in);
+    // verifier -> log
+    txnVerifier.out((v) => console.log('TEST', v));
+
     const context = {
         ...rawContext,
         store: createStore(rawContext),
-        ...createFeatures(rawContext)
+        ...createFeatures(rawContext),
+        module: {
+            txnParser, txnValidator, txnVerifier
+        }
     };
 
     Object.assign(rawContext, context);

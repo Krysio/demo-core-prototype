@@ -1,7 +1,7 @@
-import { createNode } from "../Node";
+import { createModule } from "../Module";
 
 export default function(context: {}) {
-  return createNode((inputValue: Buffer) => {
+  return createModule((inputValue: Buffer) => {
     return inputValue.toString('hex');
   }, {
     test() { return 'ABCDEF'; }

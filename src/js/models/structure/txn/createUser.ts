@@ -226,12 +226,21 @@ export const standaloneCreateUser = {
 
 /******************************/
 
-import { ruleTxnAuthorUserType, ruleTxnVerify } from "@/context/rules";
+import { ruleTxnSignatureType, ruleTxnAuthorUserType, ruleTxnVerify } from "@/context/rules";
 import { TxnStandalone } from "../Transaction";
+import { TYPE_TXN_SIGNATURE_ADMIN } from "./constants";
+
+/******************************/
+
+ruleTxnSignatureType.set(TYPE_TXN_INSERT_USER_ADMIN, TYPE_TXN_SIGNATURE_ADMIN);
+ruleTxnSignatureType.set(TYPE_TXN_INSERT_USER_USER, TYPE_TXN_SIGNATURE_ADMIN);
+ruleTxnSignatureType.set(TYPE_TXN_INSERT_USER_PUBLIC, TYPE_TXN_SIGNATURE_ADMIN);
 
 ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_USER_ADMIN, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);
 ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_USER_USER, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);
 ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_USER_PUBLIC, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);
+
+/******************************/
 
 const userNotExistInSystem = async (
     txn: TxnStandalone,
@@ -244,6 +253,7 @@ const userNotExistInSystem = async (
 
     return scope.userFromSystem === null;
 };
+
 const insertingAdminHasLowerLevel = async (
     txn: TxnStandalone,
     ctx: Context,
@@ -257,6 +267,8 @@ const insertingAdminHasLowerLevel = async (
 
     return scope.author.getValue('level') >= user.getValue('level')
 };
+
+/******************************/
 
 ruleTxnVerify.set(TYPE_TXN_INSERT_USER_ADMIN, [
     userNotExistInSystem,

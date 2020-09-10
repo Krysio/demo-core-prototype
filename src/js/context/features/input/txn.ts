@@ -23,6 +23,8 @@ export default function (rawContext: unknown) {
             return;
         }
 
+        context.module.txnParser.in(txn.toBuffer());
+
         // Sprawdzamy czy txn może zostać przyjęta odnośnie czasu,
         // wskazania na blok
         // transakcja zostanie przyjęta jeśli podpisuje aktualny blok na szcycie
