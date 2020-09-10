@@ -1,7 +1,7 @@
 import { structure } from "../base";
 import { Uleb128 } from "../Uleb128";
 import { standaloneByAdmin } from "./common";
-import { User, TYPE_USER_ADMIN } from "../User";
+import { User, TYPE_USER_ADMIN, TYPE_USER_ROOT } from "../User";
 import { Author } from "../Author";
 import { Signature } from "../Signature";
 import { Context } from "@/context";
@@ -83,3 +83,49 @@ export const standaloneRemoveUser = {
         }
     }
 };
+
+/******************************/
+
+import { 
+    ruleTxnSignatureType,
+    ruleTxnAuthorUserType,
+    ruleTxnVerify
+} from "@/context/rules";
+import { TxnStandalone } from "../Transaction";
+import { TYPE_TXN_SIGNATURE_ADMIN, TypeTxnStandaloneScope } from "./constants";
+
+/******************************/
+
+const userExistInSystem = async (
+    txn: TxnStandalone,
+    ctx: Context,
+    scope: TypeTxnStandaloneScope & {[key: string]: any}
+) => {
+    scope.userFromSystem = scope.userFromSystem || await ctx.getUserById(
+        txn.get('data', User).getValue('userId', Uleb128)
+    );
+
+    return scope.userFromSystem !== null;
+};
+
+const removingAdminHasLowerLevel = async (
+    txn: TxnStandalone,
+    ctx: Context,
+    scope: TypeTxnStandaloneScope & {[key: string]: any}
+) => {
+    const user: User = scope.userFromSystem = scope.userFromSystem || await ctx.getUserById(
+        txn.get('data', User).getValue('userId', Uleb128)
+    );
+
+    if (user.isType(TYPE_USER_ROOT)) return false;
+    if (user.isType(TYPE_USER_ADMIN)) {
+        return scope.author.getValue('level', Uleb128) >= user.getValue('level');
+    }
+    return true;
+};
+
+//TODO zrobić listę dostępnych powodów i sprawdzać
+
+ruleTxnSignatureType.set(TYPE_TXN_REMOVE_USER, TYPE_TXN_SIGNATURE_ADMIN);
+ruleTxnAuthorUserType.set(TYPE_TXN_REMOVE_USER, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);
+ruleTxnVerify.set(TYPE_TXN_REMOVE_USER, [userExistInSystem, removingAdminHasLowerLevel]);

@@ -24,18 +24,31 @@ export default function moduleTxnValidator(ctx: unknown) {
         const type = txn.getValue('type');
         const validAuthorUserTypes = ruleTxnAuthorUserType.get(type);
         const signatureType = ruleTxnSignatureType.get(type);
+        const result = { txn, type } as {
+            txn: TxnStandalone,
+            type: number,
+            blockHash?: string,
+            blockIndex?: number,
+            author?: User,
+            authors?: User[]
+        };
 
         // widełki czasowe na podpisanie bloku
         switch (signatureType) {
             case TYPE_TXN_SIGNATURE_ADMIN: {
                 const signingBlockIndex = txn.getValue('signingBlockIndex', Uleb128);
                 // TODO czy ten block index można teraz podpisywać
+
+                result.blockIndex = signingBlockIndex;
             } break;
             case TYPE_TXN_SIGNATURE_USER:
             case TYPE_TXN_SIGNATURE_GROUP: {
                 const signingBlockHash = txn.get('signingBlockHash', BlockHash).getValue();
                 // TODO czy ten hash można teraz podpisywać
+
+                result.blockHash = signingBlockHash.toString('hex');
             } break;
+            default: return null;
         }
 
         // podpis
@@ -61,13 +74,16 @@ export default function moduleTxnValidator(ctx: unknown) {
                 // weryfikacja podpisu
                 if (!authorKey.verify(txnHash, signature)) return null;
 
-                return {txn, author};
+                result.author = author;
             } break;
             case TYPE_TXN_SIGNATURE_GROUP: {
                 // TODO multipotpis
                 const authors = [] as User[];
-                return {txn, authors};
+                result.authors = authors;
             } break;
+            default: return null;
         }
+
+        return result;
     });
 }

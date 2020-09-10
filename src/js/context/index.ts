@@ -12,6 +12,7 @@ import BufferWrapper from "@/libs/BufferWrapper";
 import moduleTxnParser from "./modules/txnParser";
 import moduleTxnValidator from "./modules/txnValidator";
 import moduleTxnVerifier from "./modules/txnVerifier";
+import moduleTxnCollector from "./modules/txnCollector";
 
 /******************************/
 
@@ -66,13 +67,12 @@ export default function createContext(
     const txnParser = moduleTxnParser(rawContext);
     const txnValidator = moduleTxnValidator(rawContext);
     const txnVerifier = moduleTxnVerifier(rawContext);
+    const txnCollector = moduleTxnCollector(rawContext);
 
-    // parser -> validator
-    txnParser.out(txnValidator.in);
-    // validator -> log
-    txnValidator.out(txnVerifier.in);
-    // verifier -> log
-    txnVerifier.out((v) => console.log('TEST', v));
+    txnParser.out(txnValidator.in); // parser -> validator
+    txnValidator.out(txnVerifier.in); // validator -> log
+    txnVerifier.out(txnCollector.in); // verifier -> collector
+    txnVerifier.out((v) => console.log('TEST', v)); // verifier -> log
 
     const context = {
         ...rawContext,

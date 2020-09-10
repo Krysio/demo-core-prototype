@@ -1,25 +1,25 @@
 import { Context } from "@/context";
 import { createModule } from "@/libs/Module";
-import {
-    TxnStandalone,
-    Uleb128, BlockHash,
-    TYPE_TXN_SIGNATURE_ADMIN,
-    TYPE_TXN_SIGNATURE_USER,
-    TYPE_TXN_SIGNATURE_GROUP,
-    User
-} from "@/models/structure";
-import { ruleTxnSignatureType, ruleTxnAuthorUserType } from "../rules";
+import { TypeTxnStandaloneScope } from "@/models/structure";
+import { ruleTxnVerify } from "../rules";
 
 /******************************/
 
 export default function moduleTxnVerifier(ctx: unknown) {
     const context = ctx as Context;
 
-    return createModule(async (args: {
-        txn: TxnStandalone,
-        author?: User,
-        authors?: User[]
-    }) => {
+    return createModule(async (args: TypeTxnStandaloneScope) => {
+        const { txn, type } = args;
+        const ruleVerify = ruleTxnVerify.get(type);
+
+        if (ruleVerify) {
+            for (let verify of ruleVerify) {
+                if (!verify(txn, context, args)) {
+                    return null;
+                }
+            }
+        }
+
         return args;
     });
 }
