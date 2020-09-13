@@ -34,6 +34,13 @@ export default function (refContext: unknown) {
             nextCandidate.setPreviousBlockHash(nextBlock.getHash());
             context.insertWaitingTransactionsToBlock(nextCandidate);
 
+            context.module.blockCreator.in({
+                index: nextBlock.getIndex(),
+                time: nextBlock.getTime(),
+                previousBlockHash: nextBlock.getPreviousBlockHash(),
+                secondPreviousBlockHash: currentTopBlock.getPreviousBlockHash()
+            });
+
             context.topBlock.candidate = nextCandidate;
 
             setTimeout(afterPushBlockChain);

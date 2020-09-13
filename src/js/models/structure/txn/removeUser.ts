@@ -124,7 +124,7 @@ const removingAdminHasLowerLevel = async (
     return true;
 };
 
-//TODO zrobić listę dostępnych powodów i sprawdzać
+//TODO zrobić listę dostępnych powodów usunięcia i sprawdzać
 
 ruleTxnSignatureType.set(TYPE_TXN_REMOVE_USER, TYPE_TXN_SIGNATURE_ADMIN);
 ruleTxnAuthorUserType.set(TYPE_TXN_REMOVE_USER, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);

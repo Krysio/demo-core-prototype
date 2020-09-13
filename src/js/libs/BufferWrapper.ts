@@ -193,4 +193,9 @@ export default class BufferWrapper extends Buffer {
             super.alloc(...args)
         );
     }
+
+    public _isBuffer = true;
+    static compare(a: BufferWrapper, b: BufferWrapper) {
+        return super.compare(a, b);
+    }
 }

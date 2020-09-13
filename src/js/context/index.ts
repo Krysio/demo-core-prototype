@@ -13,6 +13,8 @@ import moduleTxnParser from "./modules/txnParser";
 import moduleTxnValidator from "./modules/txnValidator";
 import moduleTxnVerifier from "./modules/txnVerifier";
 import moduleTxnCollector from "./modules/txnCollector";
+import moduleUserInsert from "./modules/userInsert";
+import moduleBlockCreator from "./modules/blockCreator";
 
 /******************************/
 
@@ -69,17 +71,24 @@ export default function createContext(
     const txnVerifier = moduleTxnVerifier(rawContext);
     const txnCollector = moduleTxnCollector(rawContext);
 
+    const blockCreator = moduleBlockCreator(rawContext);
+
+    const userInsert = moduleUserInsert(rawContext);
+
     txnParser.out(txnValidator.in); // parser -> validator
     txnValidator.out(txnVerifier.in); // validator -> log
     txnVerifier.out(txnCollector.in); // verifier -> collector
-    txnVerifier.out((v) => console.log('TEST', v)); // verifier -> log
+    txnVerifier.out((v) => console.log('verifier', v)); // verifier -> log
+    blockCreator.out((v) => console.log('block', v)); // verifier -> log
 
     const context = {
         ...rawContext,
         store: createStore(rawContext),
         ...createFeatures(rawContext),
         module: {
-            txnParser, txnValidator, txnVerifier
+            txnParser, txnValidator, txnVerifier, txnCollector,
+            blockCreator,
+            userInsert,
         }
     };
 
