@@ -230,12 +230,16 @@ import {
     ruleTxnSignatureType,
     ruleTxnAuthorUserType,
     ruleTxnVerify,
-    ruleTxnResourceReserve
+    ruleTxnOnlyEvenBlockIndex
 } from "@/context/rules";
-import { TxnStandalone } from "../Transaction";
+import { TxnStandalone, TxnInternal } from "../Transaction";
 import { TYPE_TXN_SIGNATURE_ADMIN, TypeTxnStandaloneScope } from "./constants";
 
 /******************************/
+
+ruleTxnOnlyEvenBlockIndex.set(TYPE_TXN_INSERT_USER_ADMIN, true);
+ruleTxnOnlyEvenBlockIndex.set(TYPE_TXN_INSERT_USER_USER, true);
+ruleTxnOnlyEvenBlockIndex.set(TYPE_TXN_INSERT_USER_PUBLIC, true);
 
 ruleTxnSignatureType.set(TYPE_TXN_INSERT_USER_ADMIN, TYPE_TXN_SIGNATURE_ADMIN);
 ruleTxnSignatureType.set(TYPE_TXN_INSERT_USER_USER, TYPE_TXN_SIGNATURE_ADMIN);
@@ -249,27 +253,7 @@ ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_USER_PUBLIC, [TYPE_USER_ROOT, TYPE_USE
 
 // weryfikacja
 
-const userNotExistInSystem = async (
-    txn: TxnStandalone,
-    ctx: Context,
-    scope: TypeTxnStandaloneScope & {[key: string]: any}
-) => {
-    scope.userFromSystem = scope.userFromSystem || await ctx.getUserById(
-        txn.get('data', User).getValue('userId', Uleb128)
-    );
-
-    return scope.userFromSystem === null;
-};
-
-const insertingAdminHasLowerLevel = async (
-    txn: TxnStandalone,
-    ctx: Context,
-    scope: TypeTxnStandaloneScope & {[key: string]: any}
-) => {
-    const user = txn.get('data', User).asType(TYPE_USER_ADMIN);
-
-    return scope.author.getValue('level', Uleb128) >= user.getValue('level')
-};
+import { userNotExistInSystem, insertingAdminHasLowerLevel } from "@/helper/verifier/user";
 
 ruleTxnVerify.set(TYPE_TXN_INSERT_USER_ADMIN, [
     userNotExistInSystem,
@@ -277,17 +261,3 @@ ruleTxnVerify.set(TYPE_TXN_INSERT_USER_ADMIN, [
 ]);
 ruleTxnVerify.set(TYPE_TXN_INSERT_USER_USER, [userNotExistInSystem]);
 ruleTxnVerify.set(TYPE_TXN_INSERT_USER_PUBLIC, [userNotExistInSystem]);
-
-/******************************/
-
-// rezerwacja zasobu
-
-const reserveUserId = (txn: TxnStandalone) => {
-    const userId = txn.get('data', User).getValue('userId', Uleb128);
-
-    return `userId:${ userId }`;
-}
-
-ruleTxnResourceReserve.set(TYPE_TXN_INSERT_USER_ADMIN, [reserveUserId]);
-ruleTxnResourceReserve.set(TYPE_TXN_INSERT_USER_USER, [reserveUserId]);
-ruleTxnResourceReserve.set(TYPE_TXN_INSERT_USER_PUBLIC, [reserveUserId]);

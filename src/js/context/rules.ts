@@ -1,6 +1,7 @@
 import { Context } from "@/context";
 import { TxnStandalone, TypeTxnStandaloneScope, TxnInternal } from "@/models/structure";
 
+export const ruleTxnOnlyEvenBlockIndex = new Map<number, boolean>();
 export const ruleTxnSignatureType = new Map<number, number>();
 export const ruleTxnAuthorUserType = new Map<number, number[]>();
 export const ruleTxnVerify
@@ -14,4 +15,3 @@ export const ruleTxnVerify
             ) => Promise<boolean>
         )[]
     >();
-export const ruleTxnResourceReserve = new Map<number, ((txn: TxnInternal) => string)[]>();

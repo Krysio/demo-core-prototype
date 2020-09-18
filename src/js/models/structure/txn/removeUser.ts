@@ -96,33 +96,7 @@ import { TYPE_TXN_SIGNATURE_ADMIN, TypeTxnStandaloneScope } from "./constants";
 
 /******************************/
 
-const userExistInSystem = async (
-    txn: TxnStandalone,
-    ctx: Context,
-    scope: TypeTxnStandaloneScope & {[key: string]: any}
-) => {
-    scope.userFromSystem = scope.userFromSystem || await ctx.getUserById(
-        txn.get('data', User).getValue('userId', Uleb128)
-    );
-
-    return scope.userFromSystem !== null;
-};
-
-const removingAdminHasLowerLevel = async (
-    txn: TxnStandalone,
-    ctx: Context,
-    scope: TypeTxnStandaloneScope & {[key: string]: any}
-) => {
-    const user: User = scope.userFromSystem = scope.userFromSystem || await ctx.getUserById(
-        txn.get('data', User).getValue('userId', Uleb128)
-    );
-
-    if (user.isType(TYPE_USER_ROOT)) return false;
-    if (user.isType(TYPE_USER_ADMIN)) {
-        return scope.author.getValue('level', Uleb128) >= user.getValue('level');
-    }
-    return true;
-};
+import { userExistInSystem, removingAdminHasLowerLevel } from "@/helper/verifier/user";
 
 //TODO zrobić listę dostępnych powodów usunięcia i sprawdzać
 

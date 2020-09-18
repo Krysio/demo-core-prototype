@@ -46,7 +46,7 @@ export default function moduleTxnCollector(ctx: unknown) {
     {
         getTxnForBlockByIndex(
             index: number,
-            remove = true
+            remove: boolean
         ) {
             const slot = storeByIndex.get(index);
 
@@ -60,7 +60,7 @@ export default function moduleTxnCollector(ctx: unknown) {
         },
         getTxnForBlockByHash(
             hash: string,
-            remove = true
+            remove: boolean
         ) {
             const slot = storeByHash.get(hash);
 

@@ -8,7 +8,9 @@ export default function(rawContext: unknown) {
 
     function changeBlock(block: Block) {
         context.topBlock.current = block;
+        context.pushBlockIndexAndHash(block.getIndex(), block.getHash());
         context.events.emit('node/topBlock/compare/accept', block);
+        // TODO lock system and apply block
         context.events.emit('node/topBlock/changed', block);
     }
 

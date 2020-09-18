@@ -156,3 +156,38 @@ export const externalEndorsing = {
         }
     }
 };
+
+/******************************/
+
+import {
+    ruleTxnOnlyEvenBlockIndex,
+    ruleTxnSignatureType,
+    ruleTxnAuthorUserType,
+    ruleTxnVerify
+} from "@/context/rules";
+import { TYPE_TXN_SIGNATURE_USER } from "./constants";
+
+ruleTxnOnlyEvenBlockIndex.set(TYPE_TXN_INSERT_ENDORSING, true);
+ruleTxnOnlyEvenBlockIndex.set(TYPE_TXN_REMOVE_ENDORSING, true);
+ruleTxnOnlyEvenBlockIndex.set(TYPE_TXN_REPLACE_ENDORSING, true);
+
+ruleTxnSignatureType.set(TYPE_TXN_INSERT_ENDORSING, TYPE_TXN_SIGNATURE_USER);
+ruleTxnSignatureType.set(TYPE_TXN_REMOVE_ENDORSING, TYPE_TXN_SIGNATURE_USER);
+ruleTxnSignatureType.set(TYPE_TXN_REPLACE_ENDORSING, TYPE_TXN_SIGNATURE_USER);
+
+ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_ENDORSING, [TYPE_USER_USER, TYPE_USER_PUBLIC]);
+ruleTxnAuthorUserType.set(TYPE_TXN_REMOVE_ENDORSING, [TYPE_USER_USER, TYPE_USER_PUBLIC]);
+ruleTxnAuthorUserType.set(TYPE_TXN_REPLACE_ENDORSING, [TYPE_USER_USER, TYPE_USER_PUBLIC]);
+
+/******************************/
+
+// weryfikacja
+
+import { userExistInSystem } from "@/helper/verifier/user";
+
+ruleTxnVerify.set(TYPE_TXN_INSERT_ENDORSING, [userExistInSystem]);
+ruleTxnVerify.set(TYPE_TXN_REMOVE_ENDORSING, []);
+ruleTxnVerify.set(TYPE_TXN_REPLACE_ENDORSING, [userExistInSystem]);
+
+// TODO user istnieje i jest to user lub public
+// TODO id jest na liście poparcia

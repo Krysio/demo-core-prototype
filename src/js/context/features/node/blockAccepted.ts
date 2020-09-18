@@ -16,7 +16,7 @@ export default function (rawContext: unknown) {
 
         context.storeBlock(block);
 
-        const currentIndex = context.getCurrentBlockIndex();
+        const currentIndex = context.getCurrentBlockIndexByTime();
 
         if (context.hasTopBlock() === false
             && currentIndex === block.getIndex()

@@ -198,4 +198,9 @@ export default class BufferWrapper extends Buffer {
     static compare(a: BufferWrapper, b: BufferWrapper) {
         return super.compare(a, b);
     }
+
+    //@ts-ignore
+    public ['toJSON' as 'toJSON-tsFix']() {
+        return `Buff[${this.toString('hex')}]`;
+    }
 }

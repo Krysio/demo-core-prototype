@@ -26,6 +26,7 @@ export default function (refContext: unknown) {
             context.insertWaitingTransactionsToBlock(nextBlock);
 
             context.topBlock.current = nextBlock;
+            context.pushBlockIndexAndHash(nextBlock.getIndex(), nextBlock.getHash());
             context.storeBlock(nextBlock);
 
             const nextCandidate = Block.create();
@@ -56,7 +57,7 @@ export default function (refContext: unknown) {
     function tick() {
         if (context.hasTopBlock() === true) {
             const currentTopBlock = context.getTopBlock();
-            const currentIndex = context.getCurrentBlockIndex();
+            const currentIndex = context.getCurrentBlockIndexByTime();
 
             if (currentIndex > currentTopBlock.getIndex()) {
                 syncPromise.reset();

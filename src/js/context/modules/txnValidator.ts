@@ -8,7 +8,12 @@ import {
     TYPE_TXN_SIGNATURE_GROUP,
     User
 } from "@/models/structure";
-import { ruleTxnSignatureType, ruleTxnAuthorUserType } from "../rules";
+import {
+    ruleTxnOnlyEvenBlockIndex,
+    ruleTxnSignatureType,
+    ruleTxnAuthorUserType
+} from "../rules";
+import { Block } from "@/models/block";
 
 /******************************/
 
@@ -33,6 +38,8 @@ export default function moduleTxnValidator(ctx: unknown) {
             authors?: User[]
         };
 
+        // TODO podpisywyany blok istnieje
+        let block: Block;
         // widełki czasowe na podpisanie bloku
         switch (signatureType) {
             case TYPE_TXN_SIGNATURE_ADMIN: {
@@ -49,6 +56,13 @@ export default function moduleTxnValidator(ctx: unknown) {
                 result.blockHash = signingBlockHash.toString('hex');
             } break;
             default: return null;
+        }
+
+        // transakcja może trafić tylko do bloku o ideksie parzystym
+        if (ruleTxnOnlyEvenBlockIndex.get(type)) {
+            if (block.getIndex() % 2) {
+                return null;
+            }
         }
 
         // podpis
