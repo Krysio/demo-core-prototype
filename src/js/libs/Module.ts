@@ -7,13 +7,13 @@ export function createModule<
   T_api extends { [Key in keyof T_api]: T_api[Key] }
 >(
   main: (inputValue: T_in) => T_out,
-  api?: T_api 
+  api?: T_api
 ) {
   const events = new EventEmitter();
 
   return {
     in(inputValue: T_in) {
-      const result = main(inputValue);
+      const result: any = main(inputValue);
 
       if (result !== null && result !== undefined) {
         if (result instanceof Promise) {

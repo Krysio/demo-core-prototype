@@ -50,3 +50,15 @@ export const removingAdminHasLowerLevel = async (
     }
     return true;
 };
+
+export const userIsUserOrPublic = async (
+    txn: TxnStandalone,
+    ctx: Context,
+    scope: TypeTxnStandaloneScope & {[key: string]: any}
+) => {
+    const user: User = scope.userFromSystem = scope.userFromSystem || await ctx.getUserById(
+        txn.get('data', User).getValue('userId', Uleb128)
+    );
+
+    return user.isUser() || user.isPublic();
+}

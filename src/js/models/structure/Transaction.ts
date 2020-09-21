@@ -5,7 +5,6 @@ import { Author } from "./Author";
 import { Signature } from "./Signature";
 import { BlockIndex } from "./BlockIndex";
 import { Block } from "../Block";
-import { Document } from "./Document";
 
 import { Context } from "@/context";
 import { HashSum } from "@/services/crypto/sha256";
@@ -16,13 +15,14 @@ import {
     internalInitial,
     internalCreateUser, standaloneCreateUser,
     internalRemoveUser, standaloneRemoveUser,
-    internalEndoring, externalEndorsing
+    internalEndoring, standaloneEndorsing,
+    internalDocument, standaloneDocument,
+    internalBind, standaloneBind,
+    internalVote, standaloneVote
 } from "./txn";
-import { User } from "./User";
 
 /******************************/
 
-export const TYPE_TXN_INSERT_DOCUMENT = 48;
 export const TYPE_TXN_VOTE = 64;
 export const TYPE_TXN_BIND = 65;
 
@@ -36,47 +36,9 @@ export class TxnInternal extends typedStructure({
             ...internalCreateUser,
             ...internalRemoveUser,
             ...internalEndoring,
-
-            [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends internalByUser({
-                'data': Document
-            }) {
-                verify() {
-                    // TODO author ma poparcie
-                    return true;
-                }
-                apply() {
-                    // save
-                }
-            },
-
-            [TYPE_TXN_VOTE]: class TxnVote extends internalByUser({
-                'data': structure({
-                    'documentId': Uleb128,
-                    'votes': ArrayOfUleb128
-                })
-            }) {
-                verify() {
-                    // TODO author ma poparcie
-                    return true;
-                }
-                apply() {
-                    // save
-                }
-            },
-
-            [TYPE_TXN_BIND]: class TxnBind extends internalByUser({
-                'data': structure({
-                    'userId': Uleb128
-                })
-            }) {
-                verify() {
-                    // TODO author ma poparcie
-                    return true;
-                }
-                apply() {
-                    // save
-                }
-            },
+            ...internalDocument,
+            ...internalBind,
+            ...internalVote,
         }
     }
 ) {
@@ -111,27 +73,8 @@ export class TxnStandalone extends typedStructure({
     'type': {
         ...standaloneCreateUser,
         ...standaloneRemoveUser,
-        ...externalEndorsing,
-
-        [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends standaloneByUser({
-            'data': Document
-        }) {
-            verify() {
-                // TODO author ma poparcie
-                return true;
-            }
-        },
-
-        [TYPE_TXN_BIND]: class TxnBind extends standaloneByUser({
-            'data': structure({
-                'userId': Uleb128
-            })
-        }) {
-            verify() {
-                // TODO author ma poparcie
-                return true;
-            }
-        }
+        ...standaloneEndorsing,
+        ...standaloneDocument,
     }
 }) {
     // virtual methods

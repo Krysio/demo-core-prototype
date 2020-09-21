@@ -12,8 +12,8 @@ import { Context } from "@/context";
 /******************************/
 
 class TxnInternalInsertUser extends structure({
-    'data': User,
     'author': Author,
+    'data': User,
     'signature': Signature
 }) {
     public async verifyPrepareInputs(
@@ -189,7 +189,7 @@ export const standaloneCreateUser = {
 
             // wstawiany typ: user
             if (!user.isType(TYPE_USER_USER)) return false;
-                
+
             /** TODO
              * verify:
              * wartości z configa
@@ -226,14 +226,13 @@ export const standaloneCreateUser = {
 
 /******************************/
 
-import { 
+import {
     ruleTxnSignatureType,
     ruleTxnAuthorUserType,
     ruleTxnVerify,
     ruleTxnOnlyEvenBlockIndex
 } from "@/context/rules";
-import { TxnStandalone, TxnInternal } from "../Transaction";
-import { TYPE_TXN_SIGNATURE_ADMIN, TypeTxnStandaloneScope } from "./constants";
+import { TYPE_TXN_SIGNATURE_ADMIN } from "./constants";
 
 /******************************/
 

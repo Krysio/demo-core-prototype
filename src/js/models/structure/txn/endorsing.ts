@@ -67,7 +67,7 @@ async function prepareInputs(context: Context) {
     return { user, edorsingList, config };
 }
 
-export const externalEndorsing = {
+export const standaloneEndorsing = {
     [TYPE_TXN_INSERT_ENDORSING]: class TxnInsertEndorsing extends standaloneByUser({
         'data': structure({
             'userId': Uleb128
@@ -89,7 +89,7 @@ export const externalEndorsing = {
             edorsingList: any[]
         }) {
             if (!super.verify(inputs)) return false;
-            
+
             const { user, config, edorsingList } = inputs;
 
             // user istnieje i jest to user lub public
@@ -183,11 +183,12 @@ ruleTxnAuthorUserType.set(TYPE_TXN_REPLACE_ENDORSING, [TYPE_USER_USER, TYPE_USER
 
 // weryfikacja
 
-import { userExistInSystem } from "@/helper/verifier/user";
+import {
+    userExistInSystem, userIsUserOrPublic
+} from "@/helper/verifier/user";
 
-ruleTxnVerify.set(TYPE_TXN_INSERT_ENDORSING, [userExistInSystem]);
+ruleTxnVerify.set(TYPE_TXN_INSERT_ENDORSING, [userExistInSystem, userIsUserOrPublic]);
 ruleTxnVerify.set(TYPE_TXN_REMOVE_ENDORSING, []);
-ruleTxnVerify.set(TYPE_TXN_REPLACE_ENDORSING, [userExistInSystem]);
+ruleTxnVerify.set(TYPE_TXN_REPLACE_ENDORSING, [userExistInSystem, userIsUserOrPublic]);
 
-// TODO user istnieje i jest to user lub public
 // TODO id jest na liście poparcia

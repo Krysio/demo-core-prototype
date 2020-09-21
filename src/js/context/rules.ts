@@ -15,3 +15,4 @@ export const ruleTxnVerify
             ) => Promise<boolean>
         )[]
     >();
+export const ruleTxnResourceReserve = new Map<number, ((txn: TxnInternal) => string)[]>();

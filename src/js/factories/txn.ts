@@ -205,6 +205,7 @@ export function removeUser(inputs: {
 }
 
 export function insertDocument(inputs: {
+    documentId: number,
     authorId: number,
     authorPrivateKey: Buffer,
     targetBlockHash: BufferWrapper,
@@ -213,7 +214,8 @@ export function insertDocument(inputs: {
     const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_DOCUMENT);
     const document = $$.create('Document');
     const fileHash = $$.create('Hash').setValue('type', $.TYPE_HASH_Sha256);
-    
+
+    document.setValue('documentId', inputs.documentId);
     document.setValue('authorId', inputs.authorId);
     document.setValue('countOfCredits', 1);
     document.setValue('countOfOptions', 1);

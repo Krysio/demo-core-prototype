@@ -14,6 +14,8 @@ import {
     ruleTxnAuthorUserType
 } from "../rules";
 import { Block } from "@/models/block";
+import Time from "@/services/Time";
+import BufferWrapper from "@/libs/BufferWrapper";
 
 /******************************/
 
@@ -39,19 +41,62 @@ export default function moduleTxnValidator(ctx: unknown) {
         };
 
         // TODO podpisywyany blok istnieje
+        const firstTopBlock = context.getTopBlock();
+        const secondTopBlock = context.getSecondTopBlock();
+        const config = context.getConfig();
+        const timeLimit = Math.min(
+            5*60e3,
+            Math.ceil(config.getDiscreteBlockPeriod() / 2)
+        );
         let block: Block;
         // widełki czasowe na podpisanie bloku
         switch (signatureType) {
             case TYPE_TXN_SIGNATURE_ADMIN: {
                 const signingBlockIndex = txn.getValue('signingBlockIndex', Uleb128);
-                // TODO czy ten block index można teraz podpisywać
+
+                // czy ten block index można teraz podpisywać
+                if (firstTopBlock.getIndex() === signingBlockIndex) {
+                    block = firstTopBlock;
+                } else {
+                    if (secondTopBlock.getIndex() === signingBlockIndex) {
+                        block = secondTopBlock;
+                        if (Time.now() > firstTopBlock.getTime() + timeLimit) {
+                            return null;
+                        }
+                    } else {
+                        return null;
+                    }
+                }
 
                 result.blockIndex = signingBlockIndex;
             } break;
             case TYPE_TXN_SIGNATURE_USER:
             case TYPE_TXN_SIGNATURE_GROUP: {
                 const signingBlockHash = txn.get('signingBlockHash', BlockHash).getValue();
-                // TODO czy ten hash można teraz podpisywać
+
+                // czy ten block index można teraz podpisywać
+                if (
+                    BufferWrapper.compare(
+                        firstTopBlock.getHash(),
+                        signingBlockHash
+                    ) === 0
+                ) {
+                    block = firstTopBlock;
+                } else {
+                    if (
+                        BufferWrapper.compare(
+                            secondTopBlock.getHash(),
+                            signingBlockHash
+                        ) === 0
+                    ) {
+                        block = secondTopBlock;
+                        if (Time.now() > firstTopBlock.getTime() + timeLimit) {
+                            return null;
+                        }
+                    } else {
+                        return null;
+                    }
+                }
 
                 result.blockHash = signingBlockHash.toString('hex');
             } break;
@@ -75,14 +120,14 @@ export default function moduleTxnValidator(ctx: unknown) {
                 if (!signature.length) return null;
 
                 const author = await context.getUserById(authorId) as User;
-    
+
                 // autor nie istnieje
                 if (author === null) return null;
-    
+
                 const authorType = author.getValue('type', Uleb128);
                 const authorKey = author.get('key');
                 const txnHash = txn.getHash();
-                
+
                 // typ autora
                 if (validAuthorUserTypes.indexOf(authorType) === -1) return null;
                 // weryfikacja podpisu

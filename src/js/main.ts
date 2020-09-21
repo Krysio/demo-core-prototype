@@ -117,7 +117,7 @@ node.takeBlock(genesis.blockGenesis);
 
     await new Promise((r) => setTimeout(r, 5e3));
 
-    testUser3.txnInsertDocument('President candidate');
+    testUser3.txnInsertDocument(1, 'President candidate');
 })();
 
 //#region React

@@ -5,14 +5,15 @@ import { BlockHash } from "../Hash";
 import { Signature } from "../Signature";
 import { User } from "../User";
 import { Context } from "@/context";
+import { Blob } from "../Blob";
 
 /******************************/
 
 export function standaloneByAdmin<S extends {[K in keyof S]: S[K]}>(schema: S) {
     return class TxnByAdmin extends structure({
+        'author': Author,
         ...schema,
         'signingBlockIndex': BlockIndex,
-        'author': Author,
         'signature': Signature
     }) {
         protected verifyInputs = {
@@ -27,7 +28,7 @@ export function standaloneByAdmin<S extends {[K in keyof S]: S[K]}>(schema: S) {
             this.verifyInputs.author = await context.getUserById(
                 this.getValue('author')
             );
-    
+
             return this.verifyInputs;
         }
         public verify(inputs: {}) {
@@ -41,7 +42,7 @@ export function standaloneByAdmin<S extends {[K in keyof S]: S[K]}>(schema: S) {
             if (!author.get('key').verify(
                 //@ts-ignore
                 this.getHash(),
-                this.getValue('signature')
+                this.getValue('signature', Blob)
             )) return false;
             return true;
         }
@@ -50,9 +51,9 @@ export function standaloneByAdmin<S extends {[K in keyof S]: S[K]}>(schema: S) {
 
 export function standaloneByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
     return class TxnByUser extends structure({
+        'author': Author,
         ...schema,
         'signingBlockHash': BlockHash,
-        'author': Author,
         'signature': Signature
     }) {
         protected verifyInputs = {
@@ -67,7 +68,7 @@ export function standaloneByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
             this.verifyInputs.author = await context.getUserById(
                 this.getValue('author')
             );
-    
+
             return this.verifyInputs;
         }
         public verify(inputs: {}) {
@@ -81,7 +82,7 @@ export function standaloneByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
             if (!author.get('key').verify(
                 //@ts-ignore
                 this.getHash(),
-                this.getValue('signature')
+                this.getValue('signature', Blob)
             )) return false;
             return true;
         }
@@ -90,8 +91,8 @@ export function standaloneByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
 
 export function internalByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
     return class TxnByUser extends structure({
-        ...schema,
         'author': Author,
+        ...schema,
         'signature': Signature
     }) {
         protected verifyInputs = {
@@ -106,7 +107,7 @@ export function internalByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
             this.verifyInputs.author = await context.getUserById(
                 this.getValue('author')
             );
-    
+
             return this.verifyInputs;
         }
         public verify(inputs: {}) {
@@ -120,7 +121,7 @@ export function internalByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
             if (!author.get('key').verify(
                 //@ts-ignore
                 this.getHash(),
-                this.getValue('signature')
+                this.getValue('signature', Blob)
             )) return false;
             return true;
         }

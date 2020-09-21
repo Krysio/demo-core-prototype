@@ -14,11 +14,11 @@ export const TYPE_TXN_REMOVE_USER = 19;
 
 export const internalRemoveUser = {
     [TYPE_TXN_REMOVE_USER]: class TxnRemoveUser extends structure({
+        'author': Author,
         'data': structure({
             'userId': Uleb128,
             'reason': Uleb128
         }),
-        'author': Author,
         'signature': Signature
     }) {
         public apply(context: Context) {
@@ -74,7 +74,7 @@ export const standaloneRemoveUser = {
             if (!author.get('key').verify(
                 //@ts-ignore
                 this.getHash(),
-                this.getValue('signature')
+                this.getValue('signature', Blob)
             )) {
                 return false;
             }
@@ -86,13 +86,12 @@ export const standaloneRemoveUser = {
 
 /******************************/
 
-import { 
+import {
     ruleTxnSignatureType,
     ruleTxnAuthorUserType,
     ruleTxnVerify
 } from "@/context/rules";
-import { TxnStandalone } from "../Transaction";
-import { TYPE_TXN_SIGNATURE_ADMIN, TypeTxnStandaloneScope } from "./constants";
+import { TYPE_TXN_SIGNATURE_ADMIN } from "./constants";
 
 /******************************/
 

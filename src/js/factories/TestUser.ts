@@ -64,12 +64,14 @@ export class TestUser {
     /******************************/
 
     txnInsertDocument(
+        id: number,
         body: string
     ) {
         const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_DOCUMENT);
         const document = $$.create('Document');
         const fileHash = $$.create('Hash').setValue('type', $.TYPE_HASH_Sha256);
 
+        document.setValue('documentId', id);
         document.setValue('authorId', this.id());
         document.setValue('countOfCredits', 1);
         document.setValue('countOfOptions', 1);

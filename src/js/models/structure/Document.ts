@@ -26,6 +26,7 @@ type FileType =
 /******************************/
 
 export class Document extends structure({
+    'documentId': Uleb128,
     'authorId': Uleb128,
     'timeEnd': Uleb128,
     'fileHash': Hash,
