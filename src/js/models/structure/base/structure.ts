@@ -131,8 +131,16 @@ return class Structure extends Base<S> {
     ) {
         for (let key in this.structure) {
             const field = this.get(key) as any;
+            const sourceField = structure.get(key);
 
-            field.fromStructure((structure as any).get(key));
+            try {
+                if (sourceField) {
+                    field.fromStructure(sourceField);
+                }
+            } catch (error) {
+                console.log(key);
+                throw error;
+            }
         }
         return this;
     }

@@ -230,7 +230,8 @@ import {
     ruleTxnSignatureType,
     ruleTxnAuthorUserType,
     ruleTxnVerify,
-    ruleTxnOnlyEvenBlockIndex
+    ruleTxnOnlyEvenBlockIndex,
+    ruleTxnApply
 } from "@/context/rules";
 import { TYPE_TXN_SIGNATURE_ADMIN } from "./constants";
 
@@ -260,3 +261,19 @@ ruleTxnVerify.set(TYPE_TXN_INSERT_USER_ADMIN, [
 ]);
 ruleTxnVerify.set(TYPE_TXN_INSERT_USER_USER, [userNotExistInSystem]);
 ruleTxnVerify.set(TYPE_TXN_INSERT_USER_PUBLIC, [userNotExistInSystem]);
+
+/******************************/
+
+// apply
+
+function applyInsetUser(
+    this: TxnInternalInsertUser,
+    context: Context
+) {
+    const user = this.get('data', User);
+    context.module.userInsert.in(user);
+}
+
+ruleTxnApply.set(TYPE_TXN_INSERT_USER_ADMIN, applyInsetUser);
+ruleTxnApply.set(TYPE_TXN_INSERT_USER_USER, applyInsetUser);
+ruleTxnApply.set(TYPE_TXN_INSERT_USER_PUBLIC, applyInsetUser);

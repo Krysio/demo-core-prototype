@@ -6,7 +6,7 @@ import {
     TYPE_TXN_SIGNATURE_ADMIN,
     TYPE_TXN_SIGNATURE_USER,
     TYPE_TXN_SIGNATURE_GROUP,
-    User
+    User, Blob
 } from "@/models/structure";
 import {
     ruleTxnOnlyEvenBlockIndex,
@@ -115,7 +115,7 @@ export default function moduleTxnValidator(ctx: unknown) {
             case TYPE_TXN_SIGNATURE_ADMIN:
             case TYPE_TXN_SIGNATURE_USER: {
                 const authorId = txn.getValue('author', Uleb128);
-                const signature = txn.get('signature').getValue();
+                const signature = txn.get('signature', Blob).getValue();
 
                 if (!signature.length) return null;
 

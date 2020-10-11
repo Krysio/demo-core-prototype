@@ -38,9 +38,7 @@ Object.assign(global, {
 
 node.takeBlock(genesis.blockGenesis);
 
-(async function () {
-    await node.context.sync();
-
+node.context.events.once('node/topBlock/changed', async function () {
     let topBlock = node.getCurrentTopBlock();
 
     const txnCreateAdmin1 = createAdmin({
@@ -118,7 +116,7 @@ node.takeBlock(genesis.blockGenesis);
     await new Promise((r) => setTimeout(r, 5e3));
 
     testUser3.txnInsertDocument(1, 'President candidate');
-})();
+});
 
 //#region React
 

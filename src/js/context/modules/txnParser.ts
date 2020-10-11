@@ -9,7 +9,12 @@ export default function moduleTxnParser(ctx: unknown) {
     return createModule((
         txnBuffer: BufferWrapper
     ) => {
-        // TODO czy node działa
+        if (context.hasTopBlock() === false
+            || context.hasConfig() === false
+        ) {
+            context.events.emit('node/txn/verify/reject', txn, 0);
+            return;
+        }
         // TODO czy node jest zsynchronizowany
         txnBuffer.cursor = 0;
         return Structure.create("TxnStandalone").fromBuffer(txnBuffer);

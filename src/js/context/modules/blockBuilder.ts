@@ -11,7 +11,7 @@ const emptyBuffer = BufferWrapper.alloc(0);
 
 /******************************/
 
-export default function moduleBlockCreator(ctx: unknown) {
+export default function moduleBlockBuilder(ctx: unknown) {
     const context = ctx as Context;
 
     return createModule((args: {

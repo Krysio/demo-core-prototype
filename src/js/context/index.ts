@@ -14,7 +14,11 @@ import moduleTxnValidator from "./modules/txnValidator";
 import moduleTxnVerifier from "./modules/txnVerifier";
 import moduleTxnCollector from "./modules/txnCollector";
 import moduleUserInsert from "./modules/userInsert";
-import moduleBlockCreator from "./modules/blockCreator";
+import moduleBlockBuilder from "./modules/blockBuilder";
+import moduleBlockBuilderInit from "./modules/blockBuilderInit";
+import moduleClock from "./modules/clock";
+import moduleBlockSetTop from "./modules/blockSetTop";
+import moduleDocumentInsert from "./modules/documentInsert";
 
 /******************************/
 
@@ -70,16 +74,21 @@ export default function createContext(
     const txnValidator = moduleTxnValidator(rawContext);
     const txnVerifier = moduleTxnVerifier(rawContext);
     const txnCollector = moduleTxnCollector(rawContext);
-
-    const blockCreator = moduleBlockCreator(rawContext);
-
+    const clock = moduleClock(rawContext);
+    const blockBuilderInit = moduleBlockBuilderInit(rawContext);
+    const blockBuilder = moduleBlockBuilder(rawContext);
+    const blockSetTop = moduleBlockSetTop(rawContext);
     const userInsert = moduleUserInsert(rawContext);
+    const documentInsert = moduleDocumentInsert(rawContext);
 
     txnParser.out(txnValidator.in); // parser -> validator
     txnValidator.out(txnVerifier.in); // validator -> log
     txnVerifier.out(txnCollector.in); // verifier -> collector
-    txnVerifier.out((v) => console.log('verifier', v)); // verifier -> log
-    blockCreator.out((v) => console.log('block', v)); // verifier -> log
+
+    clock.out(blockBuilderInit.in);
+    blockBuilderInit.out(blockBuilder.in);
+    blockBuilder.out((v) => console.log('%cblock', 'color:red;', v));
+    blockBuilder.out(blockSetTop.in);
 
     const context = {
         ...rawContext,
@@ -87,8 +96,8 @@ export default function createContext(
         ...createFeatures(rawContext),
         module: {
             txnParser, txnValidator, txnVerifier, txnCollector,
-            blockCreator,
-            userInsert,
+            blockBuilder, blockSetTop,
+            userInsert, documentInsert,
         }
     };
 

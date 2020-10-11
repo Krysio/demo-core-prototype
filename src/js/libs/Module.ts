@@ -11,29 +11,33 @@ export function createModule<
 ) {
   const events = new EventEmitter();
 
-  return {
+  const module = {
     in(inputValue: T_in) {
       const result: any = main(inputValue);
-
-      if (result !== null && result !== undefined) {
-        if (result instanceof Promise) {
-          result.then(
-            (result) => {
-              if (result !== null && result !== undefined) {
-                events.emit('output', result);
-              }
-            }
-          );
-        } else {
-          events.emit('output', result);
-        }
-      }
+      module.emit(result);
     },
     out(
       handler: (outputValue: T_out_unpromise) => void
     ) {
       events.on('output', handler);
     },
+    emit(value: any) {
+      if (value !== null && value !== undefined) {
+        if (value instanceof Promise) {
+          value.then(
+            (value) => {
+              if (value !== null && value !== undefined) {
+                events.emit('output', value);
+              }
+            }
+          );
+        } else {
+          events.emit('output', value);
+        }
+      }
+    },
     api
   };
+
+  return module;
 }

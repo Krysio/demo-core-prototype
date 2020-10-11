@@ -1,5 +1,5 @@
 import { structure, typedStructure } from "./base";
-import { Uleb128 } from "./Uleb128";
+import { ArrayOfUleb128, Uleb128 } from "./Uleb128";
 import { Key } from "./Key";
 
 /******************************/
@@ -75,3 +75,28 @@ export class User extends typedStructure({
         return type === TYPE_USER_USER || type === TYPE_USER_PUBLIC;
     }
 }
+
+export class InternalUser extends typedStructure({
+    'type': {
+        [TYPE_USER_ROOT]: structure({
+            'key': Key
+        }),
+        [TYPE_USER_ADMIN]: structure({
+            'userId': Uleb128,
+            'level': Uleb128,
+            'key': Key
+        }),
+        [TYPE_USER_USER]: structure({
+            'userId': Uleb128,
+            'key': Key,
+            'timeStart': Uleb128,
+            'timeEnd': Uleb128,
+            'status': Uleb128,
+            'endorsing': ArrayOfUleb128
+        }),
+        [TYPE_USER_PUBLIC]: structure({
+            'userId': Uleb128,
+            'key': Key
+        })
+    }
+}) {}

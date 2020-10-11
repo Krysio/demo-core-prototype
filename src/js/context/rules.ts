@@ -16,3 +16,4 @@ export const ruleTxnVerify
         )[]
     >();
 export const ruleTxnResourceReserve = new Map<number, ((txn: TxnInternal) => string)[]>();
+export const ruleTxnApply = new Map<number, (ctx: Context, txn: TxnInternal) => void>();

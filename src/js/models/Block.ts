@@ -85,4 +85,8 @@ export class Block extends structure({
 
     return true;
   }
+
+  toJSON() {
+    return `Block<${this.getIndex()},${this.getHash().toString('hex')}>`;
+  }
 }

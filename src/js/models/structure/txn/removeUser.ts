@@ -12,20 +12,22 @@ export const TYPE_TXN_REMOVE_USER = 19;
 
 /******************************/
 
-export const internalRemoveUser = {
-    [TYPE_TXN_REMOVE_USER]: class TxnRemoveUser extends structure({
-        'author': Author,
-        'data': structure({
-            'userId': Uleb128,
-            'reason': Uleb128
-        }),
-        'signature': Signature
-    }) {
-        public apply(context: Context) {
-            const userId = this.get('data').getValue('userId');
-            context.removeUserById(userId);
-        }
+class TxnRemoveUser extends structure({
+    'author': Author,
+    'data': structure({
+        'userId': Uleb128,
+        'reason': Uleb128
+    }),
+    'signature': Signature
+}) {
+    public apply(context: Context) {
+        const userId = this.get('data').getValue('userId');
+        context.removeUserById(userId);
     }
+}
+
+export const internalRemoveUser = {
+    [TYPE_TXN_REMOVE_USER]: TxnRemoveUser
 };
 
 export const standaloneRemoveUser = {
@@ -89,7 +91,8 @@ export const standaloneRemoveUser = {
 import {
     ruleTxnSignatureType,
     ruleTxnAuthorUserType,
-    ruleTxnVerify
+    ruleTxnVerify,
+    ruleTxnApply
 } from "@/context/rules";
 import { TYPE_TXN_SIGNATURE_ADMIN } from "./constants";
 
@@ -102,3 +105,17 @@ import { userExistInSystem, removingAdminHasLowerLevel } from "@/helper/verifier
 ruleTxnSignatureType.set(TYPE_TXN_REMOVE_USER, TYPE_TXN_SIGNATURE_ADMIN);
 ruleTxnAuthorUserType.set(TYPE_TXN_REMOVE_USER, [TYPE_USER_ROOT, TYPE_USER_ADMIN]);
 ruleTxnVerify.set(TYPE_TXN_REMOVE_USER, [userExistInSystem, removingAdminHasLowerLevel]);
+
+/******************************/
+
+// apply
+
+function applyRemoveUser(
+    this: TxnRemoveUser,
+    context: Context
+) {
+    const userId = this.get('data').getValue('userId');
+    context.removeUserById(userId);
+}
+
+ruleTxnApply.set(TYPE_TXN_REMOVE_USER, applyRemoveUser);

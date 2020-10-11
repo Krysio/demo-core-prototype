@@ -1,7 +1,10 @@
 import { Context } from "@/context";
 import { createModule } from "@/libs/Module";
-import BufferWrapper from "@/libs/BufferWrapper";
-import Structure, { User } from "@/models/structure";
+import Structure, {
+    Uleb128, ArrayOfUleb128,
+    User, InternalUser,
+    TYPE_USER_USER
+} from "@/models/structure";
 
 export default function moduleUserInsert(ctx: unknown) {
     const context = ctx as Context;
@@ -9,6 +12,25 @@ export default function moduleUserInsert(ctx: unknown) {
     return createModule((
         user: User
     ) => {
+        const userId = user.getValue('userId', Uleb128);
+        const userType = user.getValue('type', Uleb128);
+        const internalUser = new InternalUser();
+
+        internalUser.init();
+        internalUser.fromStructure(user);
+
+        // default new field values
+        switch (userType) {
+            case TYPE_USER_USER:
+                internalUser
+                    .asType(TYPE_USER_USER)
+                    .setValue('status', 0)
+                    .setValue('endorsing', [])
+                break;
+        }
+
+        context.store.user.put(userId, internalUser.toBuffer());
+
         return null;
     });
 }

@@ -17,14 +17,21 @@ export default function(rawContext: unknown) {
         thirdBlockIndex: -3,
         topBlockHash: emptyBuffer,
         secondBlockHash: emptyBuffer,
-        thirdBlockHash: emptyBuffer
+        thirdBlockHash: emptyBuffer,
+        topBlock: null as Block | null,
+        secondBlock: null as Block | null,
+        thirdBlock: null as Block | null
     };
 
-    return {
+    const api = {
         state,
         canRun() {
             return context.hasConfig() && context.hasTopBlock();
         },
+        hasTopBlock() {return context.state.topBlock !== null;},
+        getTopBlock() {return context.state.topBlock as Block;},
+        hasSecondTopBlock() {return context.state.secondBlock !== null;},
+        getSecondTopBlock() {return context.state.secondBlock as Block;},
         getCurrentBlockIndexByTime() {
             if (context.hasConfig()) {
                 const config = context.getConfig();
@@ -33,16 +40,20 @@ export default function(rawContext: unknown) {
             }
             return 0;
         },
-        pushBlockIndexAndHash(
-            index: number,
-            blockHash: BufferWrapper
+        pushTopBlock(
+            block: Block,
         ) {
+            state.thirdBlock = state.secondBlock;
+            state.secondBlock = state.topBlock;
+            state.topBlock = block;
             state.thirdBlockIndex = state.secondBlockIndex;
             state.secondBlockIndex = state.topBlockIndex;
-            state.topBlockIndex = index;
+            state.topBlockIndex = block.getIndex();
             state.thirdBlockHash = state.secondBlockHash;
             state.secondBlockHash = state.topBlockHash;
-            state.topBlockHash = blockHash;
+            state.topBlockHash = block.getHash();
         }
     };
+
+    return api;
 }
