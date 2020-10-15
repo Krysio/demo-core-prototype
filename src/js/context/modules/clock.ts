@@ -25,14 +25,14 @@ export default function moduleClock(ctx: unknown) {
 
             if (currentIndex > currentTopBlock.getIndex()) {
                 if (prevResult !== currentIndex) {
-                    prevResult = currentIndex;
+                    prevResult++;
                     module.emit(prevResult);
                 }
             }
         }
     }
 
-    setInterval(requestTick, 10);
+    setInterval(requestTick, 1);
 
     return module;
 }

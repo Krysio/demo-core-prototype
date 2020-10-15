@@ -22,17 +22,6 @@ class TxnInsertRootUser extends structure({
         const user = this.get('data') as User;
         return user.isRoot() && super.isValid();
     }
-
-    verify(inputs: {
-        selfBlock: Block
-    }) {
-        if (inputs.selfBlock.getValue('index') !== 0) {
-            return false;
-        }
-
-        return true;
-    }
-    apply(context: Context) {/*TODO REMOVE*/}
 }
 
 class TxnSetConfig extends structure({
@@ -41,32 +30,14 @@ class TxnSetConfig extends structure({
     isValid() {
         return this.getConfig().isValid() && super.isValid();
     }
-
-    verify(inputs: {
-        selfBlock: Block
-    }) {
-        // lub jest to % enty blok - ustawienie configu
-        if (inputs.selfBlock.getValue('index') !== 0) {
-            return false;
-        }
-
-        const config = this.getConfig();
-
-        return config.isValid();
-    }
-
     getConfig() {
         return Config.fromBuffer(this.get('data').getValue());
     }
-    apply(context: Context) {/*TODO REMOVE*/}
 }
 
 class TxnDbHashList extends structure({
     'data': HashList
-}) {
-    verify(inputs: any) {return true;}
-    apply(context: Context) {/*TODO REMOVE*/}
-}
+}) {}
 
 export const internalInitial = {
     [TYPE_TXN_INSERT_ROOT_USER]: TxnInsertRootUser,

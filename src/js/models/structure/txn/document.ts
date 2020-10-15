@@ -12,25 +12,12 @@ export const TYPE_TXN_INSERT_DOCUMENT = 48;
 export const standaloneDocument = {
     [TYPE_TXN_INSERT_DOCUMENT]: class TxnInsertDocument extends standaloneByUser({
         'data': Document
-    }) {
-        verify() {
-            // TODO author ma poparcie
-            return true;
-        }
-    },
+    }) {},
 };
 
 class TxnInternalInsertDocument extends internalByUser({
     'data': Document
-}) {
-    verify() {
-        // TODO author ma poparcie
-        return true;
-    }
-    apply() {
-        // save
-    }
-}
+}) {}
 
 export const internalDocument = {
     [TYPE_TXN_INSERT_DOCUMENT]: TxnInternalInsertDocument,

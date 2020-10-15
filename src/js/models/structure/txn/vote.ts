@@ -10,16 +10,13 @@ export const internalVote = {
             'documentId': Uleb128,
             'votes': ArrayOfUleb128
         })
-    }) {
-        verify() {
-            // TODO author ma poparcie
-            return true;
-        }
-        apply() {
-            // save
-        }
-    },
+    }) {},
 };
 export const standaloneVote = {
-
+    [TYPE_TXN_VOTE]: class TxnVote extends standaloneByUser({
+        'data': structure({
+            'documentId': Uleb128,
+            'votes': ArrayOfUleb128
+        })
+    }) {},
 }

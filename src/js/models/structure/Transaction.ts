@@ -1,17 +1,13 @@
-import { structure, typedStructure } from "./base";
-import { Uleb128, ArrayOfUleb128 } from "./Uleb128";
+import { typedStructure } from "./base";
+import { Uleb128 } from "./Uleb128";
 import { BlockHash } from "./Hash";
 import { Author } from "./Author";
-import { Signature } from "./Signature";
 import { BlockIndex } from "./BlockIndex";
 import { Block } from "../Block";
-
-import { Context } from "@/context";
 import { HashSum } from "@/services/crypto/sha256";
 import BufferWrapper from "@/libs/BufferWrapper";
 
 import {
-    standaloneByUser, internalByUser,
     internalInitial,
     internalCreateUser, standaloneCreateUser,
     internalRemoveUser, standaloneRemoveUser,
@@ -20,11 +16,6 @@ import {
     internalBind, standaloneBind,
     internalVote, standaloneVote
 } from "./txn";
-
-/******************************/
-
-export const TYPE_TXN_VOTE = 64;
-export const TYPE_TXN_BIND = 65;
 
 /******************************/
 
@@ -42,7 +33,6 @@ export class TxnInternal extends typedStructure({
         }
     }
 ) {
-    apply(context: Context) {throw new Error();}
     getHash(
         selfBlock: Block,
         signingBlock: Block
@@ -75,14 +65,13 @@ export class TxnStandalone extends typedStructure({
         ...standaloneRemoveUser,
         ...standaloneEndorsing,
         ...standaloneDocument,
+        ...standaloneBind,
+        ...standaloneVote,
     }
 }) {
     // virtual methods
     public isUserTransaction(): boolean {throw new Error();}
     public isAdminTransaction(): boolean {throw new Error();}
-    public async verifyPrepareInputs(context: Context) {throw new Error();}
-    public verify(inputs: any): boolean {throw new Error();}
-
     public getHash() {
         const hash = new HashSum();
 

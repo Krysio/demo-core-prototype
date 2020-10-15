@@ -12,7 +12,7 @@ export const TYPE_TXN_REMOVE_USER = 19;
 
 /******************************/
 
-class TxnRemoveUser extends structure({
+class TxnInternalRemoveUser extends structure({
     'author': Author,
     'data': structure({
         'userId': Uleb128,
@@ -27,63 +27,16 @@ class TxnRemoveUser extends structure({
 }
 
 export const internalRemoveUser = {
-    [TYPE_TXN_REMOVE_USER]: TxnRemoveUser
+    [TYPE_TXN_REMOVE_USER]: TxnInternalRemoveUser
 };
 
 export const standaloneRemoveUser = {
-    [TYPE_TXN_REMOVE_USER]: class TxnRemoveUser extends standaloneByAdmin({
+    [TYPE_TXN_REMOVE_USER]: class TxnStandaloneRemoveUser extends standaloneByAdmin({
         'data': structure({
             'userId': Uleb128,
             'reason': Uleb128
         })
-    }) {
-        // ts has a problem :(
-        public async ['verifyPrepareInputs' as ':/'](context: Context) {
-            const author = await context.getUserById(
-                this.getValue('author')
-            );
-            const userById = await context.getUserById(
-                this.get('data', User)
-                .getValue('userId', Uleb128)
-            );
-            return { author, userById };
-        }
-        verify(
-            inputs: {
-                author: User;
-                userById: User;
-            }
-        ) {
-            const author = inputs.author.asType(TYPE_USER_ADMIN);
-
-            if (!author.isAdminLike()) {
-                return false;
-            }
-
-            const user = inputs.userById;
-
-            if (user === null) {
-                return false;
-            }
-            if (user.isRoot()) {
-                return false;
-            }
-            if (user.isType(TYPE_USER_ADMIN)) {
-                if (user.getValue('level') <= author.getValue('level')) {
-                    return false;
-                }
-            }
-            if (!author.get('key').verify(
-                //@ts-ignore
-                this.getHash(),
-                this.getValue('signature', Blob)
-            )) {
-                return false;
-            }
-
-            return true;
-        }
-    }
+    }) {}
 };
 
 /******************************/
@@ -111,7 +64,7 @@ ruleTxnVerify.set(TYPE_TXN_REMOVE_USER, [userExistInSystem, removingAdminHasLowe
 // apply
 
 function applyRemoveUser(
-    this: TxnRemoveUser,
+    this: TxnInternalRemoveUser,
     context: Context
 ) {
     const userId = this.get('data').getValue('userId');

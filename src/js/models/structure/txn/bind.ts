@@ -9,25 +9,12 @@ export const internalBind = {
         'data': structure({
             'userId': Uleb128
         })
-    }) {
-        verify() {
-            // TODO author ma poparcie
-            return true;
-        }
-        apply() {
-            // save
-        }
-    },
+    }) {},
 };
 export const standaloneBind = {
     [TYPE_TXN_BIND]: class TxnBind extends standaloneByUser({
         'data': structure({
             'userId': Uleb128
         })
-    }) {
-        verify() {
-            // TODO author ma poparcie
-            return true;
-        }
-    },
+    }) {},
 };
