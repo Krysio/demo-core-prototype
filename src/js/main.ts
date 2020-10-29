@@ -14,112 +14,72 @@ if (process.env.NODE_ENV === 'development') {
 // import * as dd from '@/models/test';
 // console.log(dd);
 
-import * as React from 'react';
-import * as ReactDom from 'react-dom';
-import $, { JsonNode } from 'react-json-syntax';
-
 /******************************/
 
 import Node from '@/models/node';
-import { createGenesisiForFastTest } from '@/factories/block';
-import {
-    createAdmin, createUser, createPublicUser,
-    removeUser, insertDocument
-} from '@/factories/txn';
-import { TestUser } from "@/factories/TestUser";
+import { createGenesis } from "@/test";
 
 const node = new Node();
-const genesis = createGenesisiForFastTest();
+const root = createGenesis(node);
 
 Object.assign(global, {
     dev_node: node
 });
 
-
-node.takeBlock(genesis.blockGenesis);
-
 node.context.events.once('node/topBlock/changed', async function () {
-    let topBlock = node.getCurrentTopBlock();
+    const admin1 = root.createAdmin(1);
+    const admin2 = root.createAdmin(1);
+    const admin3 = root.createAdmin(2);
+    const admin4 = root.createAdmin(2);
+    const admin5 = root.createAdmin(2);
 
-    const txnCreateAdmin1 = createAdmin({
-        userId: 1,
-        level: 1,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey
-    });
+    root.insertAdmin(admin1);
+    root.insertAdmin(admin2);
+    root.insertAdmin(admin3);
+    root.insertAdmin(admin4);
+    root.insertAdmin(admin5);
+    
+    const activeUserList = [];
+    const activeDocumentList = [];
 
-    const txnCreateAdmin2 = createAdmin({
-        userId: 2,
-        level: 1,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey
-    });
-    const txnCreateUser1 = createUser({
-        userId: 100,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey,
-        timeEnd: Date.now() + 1e3 * 60 * 5,
-        timeStart: Date.now()
-    });
-    const txnCreateUser2 = createUser({
-        userId: 101,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey,
-        timeEnd: Date.now() + 1e3 * 60 * 5,
-        timeStart: Date.now()
-    });
-    const txnCreatePublicUser1 = createPublicUser({
-        userId: 200,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey
-    });
+    root.documentList(activeDocumentList);
+    root.startRandomBehaviors();
 
-    node.takeTransaction(txnCreateAdmin1.transaction);
-    node.takeTransaction(txnCreateAdmin2.transaction);
-    node.takeTransaction(txnCreateUser1.transaction);
-    node.takeTransaction(txnCreateUser2.transaction);
-    node.takeTransaction(txnCreatePublicUser1.transaction);
+    await new Promise((r) => setTimeout(r, 1e3));
+    while (node.getCurrentTopBlock().getIndex() % 2) {
+        await new Promise((r) => setTimeout(r, 1e2));
+    }
+
+    for (let i = 0; i < 100; i++) {
+        setTimeout(async () => {
+            const user = root.createUser();
+
+            user.userList(activeUserList);
+            user.documentList(activeDocumentList);
+
+            while (node.getCurrentTopBlock().getIndex() % 2) {
+                await new Promise((r) => setTimeout(r, 1e2));
+            }
+
+            root.insertUser(user);
+
+            await new Promise((r) => setTimeout(r, Math.random() * 10e3));
+            
+            activeUserList.push(user);
+            user.startRandomBehaviors();
+        }, Math.random() * 100e3)
+    }
 
     await new Promise((r) => setTimeout(r, 5e3));
 
-    topBlock = node.getCurrentTopBlock();
-
-    const txnCreateUser3 = createUser({
-        userId: 102,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: txnCreateAdmin1.id,
-        parentPrivateKey: txnCreateAdmin1.privateKey,
-        timeEnd: Date.now() + 1e3 * 60 * 5,
-        timeStart: Date.now()
-    });
-
-    const testUser3 = (new TestUser(node))
-        .id(102)
-        .privateKey(txnCreateUser3.privateKey)
-        .publicKey(txnCreateUser3.publicKey);
-
-    const txnRemoveUser = removeUser({
-        userId: 2,
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey,
-        targetBlockIndex: topBlock.getIndex()
-    });
-
-    node.takeTransaction(txnCreateUser3.transaction);
-    node.takeTransaction(txnRemoveUser.transaction);
-
-    await new Promise((r) => setTimeout(r, 5e3));
-
-    testUser3.txnInsertDocument(1, 'President candidate');
+    //user3.txnInsertDocument(1, 'President candidate');
 });
 
 //#region React
 
+import * as React from 'react';
+import * as ReactDom from 'react-dom';
+import $ from 'react-json-syntax';
 import rNode from "@/view/Node";
 
 (function () {

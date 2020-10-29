@@ -12,6 +12,7 @@ export const EMPTY_BLOCK_HASH = BufferWrapper.alloc(32).fill(0) as BufferWrapper
 
 export class Sha256 extends Blob {
     protected value: BufferWrapper = EMPTY_BLOCK_HASH;
+    protected blobSize = 32;
 
     isValid() {
         return this.value.length === 32;

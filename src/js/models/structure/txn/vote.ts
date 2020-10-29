@@ -20,3 +20,25 @@ export const standaloneVote = {
         })
     }) {},
 }
+
+/******************************/
+
+import { TYPE_USER_USER, TYPE_USER_PUBLIC } from "../User";
+import {
+    ruleTxnSignatureType,
+    ruleTxnAuthorUserType,
+    ruleTxnVerify
+} from "@/context/rules";
+import { TYPE_TXN_SIGNATURE_USER } from "./constants";
+
+ruleTxnSignatureType.set(TYPE_TXN_VOTE, TYPE_TXN_SIGNATURE_USER);
+ruleTxnAuthorUserType.set(TYPE_TXN_VOTE, [TYPE_USER_USER, TYPE_USER_PUBLIC]);
+
+/******************************/
+
+import {
+    userExistInSystem, userIsUserOrPublic
+} from "@/helper/verifier/user";
+
+// weryfikacja
+ruleTxnVerify.set(TYPE_TXN_VOTE, []);

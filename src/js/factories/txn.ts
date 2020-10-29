@@ -52,12 +52,18 @@ export function createRoot() {
 
 export function createAdmin(inputs: {
     parentId: number,
+    publicKey?: Buffer,
     parentPrivateKey: Buffer,
     targetBlockIndex: number,
     level: number,
     userId: number
 }) {
-    const [privateKey, publicKey] = secp256k1.getKeys();
+    let privateKey = null;
+    let publicKey = inputs.publicKey;
+    
+    if (!publicKey) {
+        [privateKey, publicKey] = secp256k1.getKeys();
+    }
 
     const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_USER_ADMIN);
 
@@ -94,13 +100,20 @@ export function createAdmin(inputs: {
 
 export function createUser(inputs: {
     parentId: number,
+    publicKey?: Buffer,
     parentPrivateKey: Buffer,
     targetBlockIndex: number,
     timeStart: number,
     timeEnd: number,
     userId: number
 }) {
-    const [privateKey, publicKey] = secp256k1.getKeys();
+    let privateKey = null;
+    let publicKey = inputs.publicKey;
+    
+    if (!publicKey) {
+        [privateKey, publicKey] = secp256k1.getKeys();
+    }
+
     const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_USER_USER);
 
     transaction.setValue('version', 1);
@@ -137,11 +150,18 @@ export function createUser(inputs: {
 
 export function createPublicUser(inputs: {
     parentId: number,
+    publicKey?: Buffer,
     parentPrivateKey: Buffer,
     targetBlockIndex: number,
     userId: number
 }) {
-    const [privateKey, publicKey] = secp256k1.getKeys();
+    let privateKey = null;
+    let publicKey = inputs.publicKey;
+    
+    if (!publicKey) {
+        [privateKey, publicKey] = secp256k1.getKeys();
+    }
+
     const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_USER_PUBLIC);
 
     transaction.setValue('version', 1);
@@ -199,48 +219,6 @@ export function removeUser(inputs: {
 
     return {
         id: inputs.userId,
-        transaction,
-        hash
-    };
-}
-
-export function insertDocument(inputs: {
-    documentId: number,
-    authorId: number,
-    authorPrivateKey: Buffer,
-    targetBlockHash: BufferWrapper,
-    documentContent: string
-}) {
-    const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_INSERT_DOCUMENT);
-    const document = $$.create('Document');
-    const fileHash = $$.create('Hash').setValue('type', $.TYPE_HASH_Sha256);
-
-    document.setValue('documentId', inputs.documentId);
-    document.setValue('authorId', inputs.authorId);
-    document.setValue('countOfCredits', 1);
-    document.setValue('countOfOptions', 1);
-    document.setValue('distribution', $.FLAG_DOCUMENT_DISABLE_FLOW );
-    document.setValue('fileType', $.FILE_FORMAT_TXT);
-    document.set('fileHash', fileHash.setHashFromString(inputs.documentContent));
-    document.setValue('timeEnd', Date.now() + 1e3 * 60);
-
-    transaction.setValue('version', 1);
-    transaction.setValue('type', $.TYPE_TXN_INSERT_DOCUMENT);
-    transaction.set('data', document);
-    transaction.setValue('signingBlockHash', inputs.targetBlockHash);
-    transaction.setValue('author', inputs.authorId);
-
-    const hash: Buffer = transaction.getHash();
-    transaction.set('signature', $$.create('Signature')
-        .setValue(secp256k1.sign(
-            inputs.authorPrivateKey,
-            hash
-        ) as BufferWrapper)
-    );
-
-    return {
-        documentContent: inputs.documentContent,
-        document,
         transaction,
         hash
     };

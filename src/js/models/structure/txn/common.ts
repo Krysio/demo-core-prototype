@@ -40,3 +40,14 @@ export function internalByUser<S extends {[K in keyof S]: S[K]}>(schema: S) {
         public isAdminTransaction() {return false;}
     };
 }
+
+export function internalByAdmin<S extends {[K in keyof S]: S[K]}>(schema: S) {
+    return class TxnByUser extends structure({
+        ...schema,
+        'author': Author,
+        'signature': Signature
+    }) {
+        public isUserTransaction() {return false;}
+        public isAdminTransaction() {return true;}
+    };
+}

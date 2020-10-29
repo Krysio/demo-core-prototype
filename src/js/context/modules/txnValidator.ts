@@ -25,7 +25,11 @@ export default function moduleTxnValidator(ctx: unknown) {
     return createModule(async (
         txn: TxnStandalone
     ) => {
-        if (!txn.isValid()) return null;
+        if (!txn.isValid()) {
+            console.log('🔴', `Transakcja niepooprawna`, txn);
+            return null;
+        }
+
 
         const version = txn.getValue('version');
         const type = txn.getValue('type');
@@ -40,7 +44,6 @@ export default function moduleTxnValidator(ctx: unknown) {
             authors?: User[]
         };
 
-        // TODO podpisywyany blok istnieje
         const firstTopBlock = context.getTopBlock();
         const secondTopBlock = context.getSecondTopBlock();
         const config = context.getConfig();
@@ -61,9 +64,11 @@ export default function moduleTxnValidator(ctx: unknown) {
                     if (secondTopBlock.getIndex() === signingBlockIndex) {
                         block = secondTopBlock;
                         if (Time.now() > firstTopBlock.getTime() + timeLimit) {
+                            console.log('🔴', `Czas miną na podpisywanie tego bloku {${signingBlockIndex}}`, txn);
                             return null;
                         }
                     } else {
+                        console.log('🔴', `Nie znaleziono bloku {${signingBlockIndex}}`, txn);
                         return null;
                     }
                 }
@@ -91,21 +96,27 @@ export default function moduleTxnValidator(ctx: unknown) {
                     ) {
                         block = secondTopBlock;
                         if (Time.now() > firstTopBlock.getTime() + timeLimit) {
+                            console.log('🔴', `Czas miną na podpisywanie tego bloku {${signingBlockHash}}`, txn);
                             return null;
                         }
                     } else {
+                        console.log('🔴', `Nie znaleziono bloku {${signingBlockHash}}`, txn);
                         return null;
                     }
                 }
 
                 result.blockHash = signingBlockHash.toString('hex');
             } break;
-            default: return null;
+            default: {
+                console.log('🔴', `Nieznany typ sygnatury {${type}}`, txn);
+                return null;
+            };
         }
 
         // transakcja może trafić tylko do bloku o ideksie parzystym
         if (ruleTxnOnlyEvenBlockIndex.get(type)) {
             if (block.getIndex() % 2) {
+                console.log('🔴', `Tylko pażyste bloki`, txn);
                 return null;
             }
         }
@@ -117,21 +128,33 @@ export default function moduleTxnValidator(ctx: unknown) {
                 const authorId = txn.getValue('author', Uleb128);
                 const signature = txn.get('signature', Blob).getValue();
 
-                if (!signature.length) return null;
+                if (!signature.length) {
+                    console.log('🔴', `Brak podpisu`, txn);
+                    return null;
+                }
 
                 const author = await context.getUserById(authorId) as User;
 
                 // autor nie istnieje
-                if (author === null) return null;
+                if (author === null) {
+                    console.log('🔴', `Autor nie istnieje {${authorId}}`, txn);
+                    return null;
+                }
 
                 const authorType = author.getValue('type', Uleb128);
                 const authorKey = author.get('key');
                 const txnHash = txn.getHash();
 
                 // typ autora
-                if (validAuthorUserTypes.indexOf(authorType) === -1) return null;
+                if (validAuthorUserTypes.indexOf(authorType) === -1) {
+                    console.log('🔴', `Nieporawny typ autora {${authorType}}{${validAuthorUserTypes}}`, txn);
+                    return null;
+                }
                 // weryfikacja podpisu
-                if (!authorKey.verify(txnHash, signature)) return null;
+                if (!authorKey.verify(txnHash, signature)) {
+                    console.log('🔴', `Podpis niepoprawny {${authorId}}`, txn);
+                    return null;
+                }
 
                 result.author = author;
             } break;

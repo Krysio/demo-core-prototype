@@ -12,7 +12,7 @@ export default class rTxn extends React.Component<{
         const txn = this.props.txn;
 
         return $(
-            ['div', {'className': 'txn pl-4'}, [
+            ['span', {'className': 'txn'}, [
                 ...(() => {
                     const fieldList = [];
                     for (let key in txn['structure']) {

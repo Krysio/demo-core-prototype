@@ -33,8 +33,6 @@ export default function moduleBlockBuilder(ctx: unknown) {
         const txnByHash = context.module.txnCollector.api.getTxnForBlockByHash(previousBlockHash.toString('hex'), false);
         const txnList = [...txnByIndex, ...txnByHash];
 
-        console.log(txnList);
-
         if (txnList.length > 1) {
             txnList.sort(BufferWrapper.compare);
 

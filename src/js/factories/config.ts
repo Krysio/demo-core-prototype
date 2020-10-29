@@ -4,11 +4,12 @@ import Time from '@/services/Time';
 /******************************/
 
 export function createForFastTest() {
+    const duration = 1;
     return Config.create({
         configBlockFrequency: 8,
-        genesisTime: Time.now() - 3e3,
-        discreteBlockTime: [3, DiscreteTimeUnit.s],
-        discreteKeysTime: [3, DiscreteTimeUnit.m]
+        genesisTime: Time.now() - duration * 1e3,
+        discreteBlockTime: [duration, DiscreteTimeUnit.s],
+        discreteKeysTime: [duration, DiscreteTimeUnit.m]
     });
 }
 export function createForTest() {

@@ -57,7 +57,7 @@ export default function createContext(
     if (process.env.NODE_ENV !== "production") {
         const rawEmit = events.emit.bind(events);
         events.emit = (type: typeof events["$eventList"], ...args: any[]): ReturnType<typeof rawEmit> => {
-            console.log(
+            if (0) console.log(
                 `Node<%c${ uuid }%c>:emit<%c${ type }%c>`,
                 'color:blue;', '',
                 'color:green;', '',
@@ -87,7 +87,6 @@ export default function createContext(
 
     clock.out(blockBuilderInit.in);
     blockBuilderInit.out(blockBuilder.in);
-    blockBuilder.out((v) => console.log('%cblock', 'color:red;', v));
     blockBuilder.out(blockSetTop.in);
 
     const context = {

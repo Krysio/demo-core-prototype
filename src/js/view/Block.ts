@@ -1,10 +1,8 @@
 import * as React from 'react';
 import $, { JsonNode } from 'react-json-syntax';
-import BufferWrapper from '@/libs/BufferWrapper';
 import { Block } from '@/models/block';
 import $$ from '@/models/structure';
 import rTxn from "@/view/Txn";
-import { Blob } from '@/models/structure';
 
 /******************************/
 
@@ -14,19 +12,19 @@ export default class rBlock extends React.Component<{ block: Block }> {
 
         return $(
             ['div', { 'className': 'block' }, [
-                ['span', { 'className': 'block-version' }, [
+                ['span', { 'className': 'block-version', 'title': 'version' }, [
                     block.get('version').toBuffer().toString('hex')
                 ]],
-                ['span', { 'className': 'block-index' }, [
+                ['span', { 'className': 'block-index', 'title': 'index' }, [
                     block.get('index').toBuffer().toString('hex')
                 ]],
-                ['span', { 'className': 'block-time' }, [
+                ['span', { 'className': 'block-time', 'title': 'time' }, [
                     block.get('time').toBuffer().toString('hex')
                 ]],
-                ['span', { 'className': 'block-prevHash' }, [
+                ['span', { 'className': 'block-prevHash', 'title': 'prevHash' }, [
                     block.get('previousBlockHash').toBuffer().toString('hex')
                 ]],
-                ['span', { 'className': 'block-txnCount' }, [
+                ['span', { 'className': 'block-txnCount', 'title': 'txnCount' }, [
                     block.get('transactionCount').toBuffer().toString('hex')
                 ]],
                 ...(() => {

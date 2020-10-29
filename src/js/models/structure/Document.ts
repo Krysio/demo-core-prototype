@@ -19,21 +19,15 @@ export const FLAG_DOCUMENT_DISABLE_FLOW = 8;
 export const FILE_FORMAT_TXT = 0;
 export const FILE_FORMAT_MARKDOWN = 1;
 
-type FileType =
-    typeof FILE_FORMAT_TXT |
-    typeof FILE_FORMAT_MARKDOWN;
-
 /******************************/
 
 export class Document extends structure({
     'documentId': Uleb128,
-    'authorId': Uleb128,
     'timeEnd': Uleb128,
-    'fileHash': Hash,
-    'fileType': Uleb128,
     'countOfOptions': Uleb128,
     'countOfCredits': Uleb128,
     'distribution': Uleb128,
+    'documentHash': Hash,
 }) {
     isValid() {
         if (this.getValue('countOfOptions') < 1

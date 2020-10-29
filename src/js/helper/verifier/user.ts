@@ -31,8 +31,10 @@ export const insertingAdminHasLowerLevel = async (
     scope: TypeTxnStandaloneScope & {[key: string]: any}
 ) => {
     const user = txn.get('data', User).asType(TYPE_USER_ADMIN);
+    const authorLevel = scope.author.getValue('level', Uleb128);
+    const insertingAdminLevel = user.getValue('level');
 
-    return scope.author.getValue('level', Uleb128) >= user.getValue('level')
+    return authorLevel < insertingAdminLevel;
 };
 
 export const removingAdminHasLowerLevel = async (
