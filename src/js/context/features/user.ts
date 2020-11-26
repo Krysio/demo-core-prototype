@@ -1,5 +1,5 @@
 import { Context } from "@/context";
-import $$ from "@/models/structure";
+import $$, { TYPE_USER_USER, Uleb128 } from "@/models/structure";
 import BufferWrapper from "@/libs/BufferWrapper";
 
 export default function(rawContext: unknown) {
@@ -15,7 +15,23 @@ export default function(rawContext: unknown) {
                 return null;
             }
 
-            return $$.create('User').fromBuffer(buffUser.seek(0));
+            const user = $$.create('User').fromBuffer(buffUser.seek(0));
+            const userType = user.getValue('type', Uleb128);
+
+            switch (userType) {
+                case TYPE_USER_USER: {
+                    const typedUser = user.asType(TYPE_USER_USER);
+
+                    if (Date.now() < typedUser.getValue('timeStart')) {
+                        return null;
+                    }
+                    if (Date.now() >= typedUser.getValue('timeEnd')) {
+                        return null;
+                    }
+                } break;
+            }
+
+            return user;
         },
         async getUserEndorsingListById(
             userId: number

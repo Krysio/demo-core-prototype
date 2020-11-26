@@ -13,7 +13,9 @@ import moduleTxnParser from "./modules/txnParser";
 import moduleTxnValidator from "./modules/txnValidator";
 import moduleTxnVerifier from "./modules/txnVerifier";
 import moduleTxnCollector from "./modules/txnCollector";
+import moduleUserCreate from "./modules/userCreate";
 import moduleUserInsert from "./modules/userInsert";
+import moduleUserSuspend from "./modules/userSuspend";
 import moduleBlockBuilder from "./modules/blockBuilder";
 import moduleBlockBuilderInit from "./modules/blockBuilderInit";
 import moduleClock from "./modules/clock";
@@ -78,7 +80,9 @@ export default function createContext(
     const blockBuilderInit = moduleBlockBuilderInit(rawContext);
     const blockBuilder = moduleBlockBuilder(rawContext);
     const blockSetTop = moduleBlockSetTop(rawContext);
+    const userCreate = moduleUserCreate(rawContext);
     const userInsert = moduleUserInsert(rawContext);
+    const userSuspend = moduleUserSuspend(rawContext);
     const documentInsert = moduleDocumentInsert(rawContext);
 
     txnParser.out(txnValidator.in); // parser -> validator
@@ -96,7 +100,8 @@ export default function createContext(
         module: {
             txnParser, txnValidator, txnVerifier, txnCollector,
             blockBuilder, blockSetTop,
-            userInsert, documentInsert,
+            userCreate, userInsert, userSuspend,
+            documentInsert,
         }
     };
 

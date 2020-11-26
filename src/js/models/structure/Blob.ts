@@ -49,3 +49,37 @@ export class Blob extends Base<BufferWrapper> {
         return this.size;
     }
 }
+
+const negativeFilter = (blob: Blob) => !blob.isValid();
+export class ArrayOfBlob extends Base<Blob[]> {
+    protected value = null as Blob[];
+
+    public fromBuffer(buffer: BufferWrapper) {
+        const length = buffer.readUleb128();
+
+        this.value = [];
+        for (let i = 0; i < length; i++) {
+            this.value.push(
+                (new Blob()).init().fromBuffer(buffer)
+            );
+        }
+        return this;
+    }
+
+    public toBuffer() {
+        if (this.isValid() === false) {
+            throw new Error();
+        }
+        const toConcat = [
+            BufferWrapper.numberToUleb128Buffer(this.value.length)
+        ];
+        for (let blob of this.value) {
+            toConcat.push(blob.toBuffer());
+        }
+        return BufferWrapper.concat(toConcat);
+    }
+    
+    public isValid() {
+        return this.value !== null && this.value.filter(negativeFilter).length === 0;
+    }
+}

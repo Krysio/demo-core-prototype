@@ -7,3 +7,4 @@ export * from "./document";
 export * from "./vote";
 export * from "./bind";
 export * from "./createUser";
+export * from "./replaceUsers";

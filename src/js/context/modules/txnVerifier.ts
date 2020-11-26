@@ -15,7 +15,7 @@ export default function moduleTxnVerifier(ctx: unknown) {
         if (ruleVerify) {
             for (let verify of ruleVerify) {
                 if (!(await verify(txn, context, args))) {
-                    console.error(`moduleTxnVerifier reject ${verify.name}`);
+                    console.log('🟡', `${verify.name}`, txn);
                     return null;
                 }
             }

@@ -21,12 +21,13 @@ export default function moduleUserInsert(ctx: unknown) {
 
         // default new field values
         switch (userType) {
-            case TYPE_USER_USER:
-                internalUser
-                    .asType(TYPE_USER_USER)
-                    .setValue('status', 0)
+            case TYPE_USER_USER: {
+                const typedUser = internalUser.asType(TYPE_USER_USER);
+                
+                typedUser
+                    .setValue('level', 0)
                     .setValue('endorsing', [])
-                break;
+            } break;
         }
 
         context.store.user.put(userId, internalUser.toBuffer());

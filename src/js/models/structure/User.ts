@@ -1,4 +1,5 @@
-import { structure, typedStructure } from "./base";
+import { Base, structure, typedStructure } from "./base";
+import BufferWrapper from "@/libs/BufferWrapper";
 import { ArrayOfUleb128, Uleb128 } from "./Uleb128";
 import { Key } from "./Key";
 
@@ -10,6 +11,8 @@ export const TYPE_USER_USER = 2;
 export const TYPE_USER_PUBLIC = 3;
 
 /******************************/
+
+// TODO zamiast time start użyć suspendEnd
 
 export class User extends typedStructure({
     'type': {
@@ -91,7 +94,7 @@ export class InternalUser extends typedStructure({
             'key': Key,
             'timeStart': Uleb128,
             'timeEnd': Uleb128,
-            'status': Uleb128,
+            'level': Uleb128,
             'endorsing': ArrayOfUleb128
         }),
         [TYPE_USER_PUBLIC]: structure({
@@ -100,3 +103,41 @@ export class InternalUser extends typedStructure({
         })
     }
 }) {}
+
+const negativeFilter = (protoUser: ProtoShadowUser) => !protoUser.isValid();
+export class ProtoShadowUser extends structure({
+    'userId': Uleb128,
+    'key': Key
+}){}
+export class ArrayOfShadowUser extends Base<ProtoShadowUser[]> {
+    protected value = null as ProtoShadowUser[];
+
+    public fromBuffer(buffer: BufferWrapper) {
+        const length = buffer.readUleb128();
+
+        this.value = [];
+        for (let i = 0; i < length; i++) {
+            this.value.push(
+                (new ProtoShadowUser()).init().fromBuffer(buffer)
+            );
+        }
+        return this;
+    }
+
+    public toBuffer() {
+        if (this.isValid() === false) {
+            throw new Error();
+        }
+        const toConcat = [
+            BufferWrapper.numberToUleb128Buffer(this.value.length)
+        ];
+        for (let protoUser of this.value) {
+            toConcat.push(protoUser.toBuffer());
+        }
+        return BufferWrapper.concat(toConcat);
+    }
+    
+    public isValid() {
+        return this.value !== null && this.value.filter(negativeFilter).length === 0;
+    }
+}

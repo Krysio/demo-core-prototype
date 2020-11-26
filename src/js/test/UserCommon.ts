@@ -8,25 +8,30 @@ import { Blob, TxnStandalone } from "@/models/structure";
 /******************************/
 
 export class TestUserCommon extends TestBaseUser {
+    sign(hash: Buffer, key = this.privateKey()) {
+        return secp256k1.sign(
+            key,
+            hash
+        )
+    }
+
     txnCommon(
         transaction: TxnStandalone
     ) {
-        transaction
-            .get('signingBlockHash', Blob)
-            .setValue(this.node().getCurrentTopBlock().getHash());
-        transaction.setValue('author', this.id());
+        const txn = transaction.asType($.TYPE_TXN_INSERT_DOCUMENT);
 
-        const hash: Buffer = transaction.getHash();
-        transaction.set('signature', $$.create('Signature')
-            .setValue(secp256k1.sign(
-                this.privateKey(),
-                hash
-            ) as BufferWrapper)
+        txn.get('signingBlockHash', Blob)
+            .setValue(this.node().getCurrentTopBlock().getHash());
+        txn.setValue('author', this.id());
+
+        const hash: Buffer = txn.getHash();
+        txn.set('signature', $$.create('Signature')
+            .setValue(this.sign(hash) as BufferWrapper)
         );
 
-        this.node().takeTransaction(transaction);
+        this.node().takeTransaction(txn);
 
-        return transaction;
+        return txn;
     }
 
     txnInsertDocument(

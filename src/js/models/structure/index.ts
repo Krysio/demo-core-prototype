@@ -23,7 +23,7 @@ import { Signature } from "./Signature";
 
 import { Author } from "./Author";
 import { BlockIndex } from "./BlockIndex";
-import { User } from "./User";
+import { User, ProtoShadowUser } from "./User";
 import { HashList } from "./HashList";
 import { Document } from "./Document";
 import { TxnInternal, TxnStandalone } from "./Transaction";
@@ -33,7 +33,7 @@ const typeMap = {
     Hash, BlockHash, HashList,
     Key, Signature,
     Author, BlockIndex,
-    User, Document,
+    User, ProtoShadowUser, Document,
     TxnInternal, TxnStandalone
 };
 type TypeMap = typeof typeMap;

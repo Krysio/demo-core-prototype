@@ -1,6 +1,6 @@
 import BufferWrapper from "@/libs/BufferWrapper";
 import * as secp256k1 from "@/services/crypto/ec/secp256k1";
-import { structure, typedStructure } from "./base";
+import { Base, structure, typedStructure } from "./base";
 import { Blob } from "./Blob";
 
 /******************************/
@@ -50,3 +50,37 @@ export class Key extends typedStructure({
         throw new Error();
     }
 };
+
+const negativeFilter = (key: Key) => !key.isValid();
+export class ArrayOfKeys extends Base<Key[]> {
+    protected value = null as Key[];
+
+    public fromBuffer(buffer: BufferWrapper) {
+        const length = buffer.readUleb128();
+
+        this.value = [];
+        for (let i = 0; i < length; i++) {
+            this.value.push(
+                (new Key()).init().fromBuffer(buffer)
+            );
+        }
+        return this;
+    }
+
+    public toBuffer() {
+        if (this.isValid() === false) {
+            throw new Error();
+        }
+        const toConcat = [
+            BufferWrapper.numberToUleb128Buffer(this.value.length)
+        ];
+        for (let key of this.value) {
+            toConcat.push(key.toBuffer());
+        }
+        return BufferWrapper.concat(toConcat);
+    }
+    
+    public isValid() {
+        return this.value !== null && this.value.filter(negativeFilter).length === 0;
+    }
+}

@@ -6,7 +6,7 @@ import {
     TYPE_TXN_SIGNATURE_ADMIN,
     TYPE_TXN_SIGNATURE_USER,
     TYPE_TXN_SIGNATURE_GROUP,
-    User, Blob
+    User, Blob, ArrayOfUleb128, ArrayOfBlob
 } from "@/models/structure";
 import {
     ruleTxnOnlyEvenBlockIndex,
@@ -159,8 +159,52 @@ export default function moduleTxnValidator(ctx: unknown) {
                 result.author = author;
             } break;
             case TYPE_TXN_SIGNATURE_GROUP: {
-                // TODO multipotpis
+                const authorList = txn.getValue('authors', ArrayOfUleb128);
+                const signatureList = txn.getValue('signatures', ArrayOfBlob);
+                const txnHash = txn.getHash();
                 const authors = [] as User[];
+                
+                if (!signatureList.length) {
+                    console.log('🔴', `Brak podpisów`, txn);
+                    return null;
+                }
+                
+                if (!authorList.length) {
+                    console.log('🔴', `Brak autorów`, txn);
+                    return null;
+                }
+                
+                if (authorList.length !== signatureList.length) {
+                    console.log('🔴', `Liczba autorów !== liczba podpisów`, txn);
+                    return null;
+                }
+
+                for (let i = 0; i < authorList.length; i++) {
+                    const authorId = authorList[ i ];
+                    const signature = signatureList[ i ].getValue();
+                    const author = await context.getUserById(authorId) as User;
+
+                    // autor nie istnieje
+                    if (author === null) {
+                        console.log('🔴', `Autor nie istnieje [${i}/${authorList.length}]{${authorId}}`, txn);
+                        return null;
+                    }
+
+                    const authorType = author.getValue('type', Uleb128);
+                    const authorKey = author.get('key');
+    
+                    // typ autora
+                    if (validAuthorUserTypes.indexOf(authorType) === -1) {
+                        console.log('🔴', `Nieporawny typ autora [${i}/${authorList.length}]{${authorType}}{${validAuthorUserTypes}}`, txn);
+                        return null;
+                    }
+                    // weryfikacja podpisu
+                    if (!authorKey.verify(txnHash, signature)) {
+                        console.log('🔴', `Podpis niepoprawny [${i}/${authorList.length}]{${authorId}}`, txn);
+                        return null;
+                    }
+                }
+
                 result.authors = authors;
             } break;
             default: return null;

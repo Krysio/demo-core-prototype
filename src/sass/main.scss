@@ -392,10 +392,12 @@ $jumbotron-bg: $bgSecondary;
     .txn-data {color: rgb(255, 230, 0);}
     .txn-dataSize {color: rgb(200, 200, 200);}
     .txn-signatureSize {color: rgb(200, 200, 200);}
-    .txn-signature {color: rgb(0, 255, 0);}
+    .txn-signature,
+    .txn-signatures {color: rgb(0, 255, 0);}
     .txn-signedBlock-index {color: rgb(255, 0, 255);}
     .txn-signedBlock-hash {color: rgb(255, 0, 255);}
-    .txn-author {color: rgb(156, 0, 184);}
+    .txn-author,
+    .txn-authors {color: rgb(156, 0, 184);}
 }
 
 
