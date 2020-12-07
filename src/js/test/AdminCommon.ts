@@ -20,9 +20,10 @@ export class TestAdminCommon extends TestBaseUser {
             targetBlockIndex: this.node().getCurrentTopBlock().getIndex(),
             publicKey: user.publicKey(),
             parentId: this.id(),
+            level: 0,
             parentPrivateKey: this.privateKey(),
             timeEnd: Date.now() + 1e3 * 60 * 5,
-            timeStart: Date.now()
+            timeStart: Date.now() + 4e3
         });
 
         this.node().takeTransaction(txn.transaction);
@@ -53,6 +54,8 @@ export class TestAdminCommon extends TestBaseUser {
             publicKey: user.publicKey(),
             parentId: this.id(),
             parentPrivateKey: this.privateKey(),
+            timeEnd: Date.now() + 1e3 * 60 * 5,
+            timeStart: Date.now() + 4e3
         });
 
         this.node().takeTransaction(txn.transaction);

@@ -27,7 +27,6 @@ export default function moduleUserCreate(ctx: unknown) {
         internalUser.setValue('timeStart', data.timeStart);
         internalUser.setValue('timeEnd', data.timeEnd);
         internalUser.set('key', data.key);
-        internalUser.setValue('endorsing', []);
 
         context.store.user.put(data.userId, internalUser.toBuffer());
 

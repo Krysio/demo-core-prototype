@@ -7,7 +7,6 @@ import Time from '@/services/Time';
 export function createGenesisiForFastTest() {
     const { config, transaction: txnConfig } = txnFactory.createConfigForFastTest();
     const { publicKey, privateKey, transaction: txnRootKey } = txnFactory.createRoot();
-    const { transaction: txnDbHashList } = txnFactory.createHashesForEmptyDb();
 
     const blockGenesis = Block.create() as Block;
 
@@ -18,7 +17,6 @@ export function createGenesisiForFastTest() {
 
     blockGenesis.insertTransaction(txnRootKey.toBuffer());
     blockGenesis.insertTransaction(txnConfig.toBuffer());
-    blockGenesis.insertTransaction(txnDbHashList.toBuffer());
 
     return {
         blockGenesis,
@@ -26,8 +24,7 @@ export function createGenesisiForFastTest() {
         rootKey: { privateKey, publicKey },
         txn: {
             insertRootKey: txnRootKey,
-            config: txnConfig,
-            dbHashList: txnDbHashList
+            config: txnConfig
         }
     };
 }

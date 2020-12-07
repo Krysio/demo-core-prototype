@@ -115,14 +115,15 @@ ruleTxnAuthorUserType.set(TYPE_TXN_INSERT_USER_PUBLIC, [TYPE_USER_ROOT, TYPE_USE
 
 // weryfikacja
 
-import { userNotExistInSystem, insertingAdminHasLowerLevel } from "@/helper/verifier/user";
+import { userNotExistInSystem, insertingAdminHasLowerLevel, adminDelayStart } from "@/helper/verifier/user";
 
 ruleTxnVerify.set(TYPE_TXN_INSERT_USER_ADMIN, [
     userNotExistInSystem,
-    insertingAdminHasLowerLevel
+    insertingAdminHasLowerLevel,
+    adminDelayStart
 ]);
-ruleTxnVerify.set(TYPE_TXN_INSERT_USER_USER, [userNotExistInSystem]);
-ruleTxnVerify.set(TYPE_TXN_INSERT_USER_PUBLIC, [userNotExistInSystem]);
+ruleTxnVerify.set(TYPE_TXN_INSERT_USER_USER, [userNotExistInSystem, adminDelayStart]);
+ruleTxnVerify.set(TYPE_TXN_INSERT_USER_PUBLIC, [userNotExistInSystem, adminDelayStart]);
 
 /******************************/
 

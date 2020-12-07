@@ -66,11 +66,16 @@ export class TestBaseUser {
         this.$randomBehaviorsEnabled = true;
         this.requestRandomBehavior();
     }
+    stopRandomBehaviors() {
+        this.$randomBehaviorsEnabled = false;
+    }
 
     requestRandomBehavior() {
-        if (this.$randomBehaviorsEnabled) {
-            setTimeout(this.randomBehavior, Math.random() * this.randomBehaviorsTimeRange);
-        }
+        setTimeout(() => {
+            if (this.$randomBehaviorsEnabled) {
+                this.randomBehavior();
+            }
+        }, Math.random() * this.randomBehaviorsTimeRange);
     }
 
     randomBehavior() {}

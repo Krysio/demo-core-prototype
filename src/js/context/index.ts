@@ -85,6 +85,28 @@ export default function createContext(
     const userSuspend = moduleUserSuspend(rawContext);
     const documentInsert = moduleDocumentInsert(rawContext);
 
+    
+    if (process.env.NODE_ENV === 'development') {
+        window['dev'] = window['dev'] || {};
+        function avg() {
+            return (this.reduce((a, b) => a + b, 0) / this.length) || 0;
+        }
+        const perform = window['dev']['performace'] = {
+            txnValidator: {times: [], avg},
+            txnVerifier: {times: [], avg}
+        };
+
+        perform.txnValidator.avg = avg.bind(perform.txnValidator.times);
+        perform.txnVerifier.avg = avg.bind(perform.txnVerifier.times);
+
+        txnValidator.performance((time) => {
+            perform.txnValidator.times.push(time);
+        });
+        txnVerifier.performance((time) => {
+            perform.txnVerifier.times.push(time);
+        });
+    }
+
     txnParser.out(txnValidator.in); // parser -> validator
     txnValidator.out(txnVerifier.in); // validator -> log
     txnVerifier.out(txnCollector.in); // verifier -> collector

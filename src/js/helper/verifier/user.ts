@@ -37,6 +37,32 @@ export const insertingAdminHasLowerLevel = async (
     return authorLevel < insertingAdminLevel;
 };
 
+export const adminDelayEnd = async (
+    txn: TxnStandalone,
+    ctx: Context,
+    scope: TypeTxnStandaloneScope & {[key: string]: any}
+) => {
+    const delay = ctx.getConfig().getAdminDelay();
+    const author = scope.author;
+    //@ts-ignore
+    const timeEnd = txn.get('data').getValue('timeEnd', Uleb128);
+
+    return timeEnd > Date.now() + delay;
+};
+
+export const adminDelayStart = async (
+    txn: TxnStandalone,
+    ctx: Context,
+    scope: TypeTxnStandaloneScope & {[key: string]: any}
+) => {
+    const delay = ctx.getConfig().getAdminDelay();
+    const author = scope.author;
+    //@ts-ignore
+    const timeStart = txn.get('data').getValue('timeStart', Uleb128);
+
+    return timeStart > Date.now() + delay;
+};
+
 export const removingAdminHasLowerLevel = async (
     txn: TxnStandalone,
     ctx: Context,

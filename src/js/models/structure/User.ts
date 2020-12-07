@@ -39,17 +39,22 @@ export class User extends typedStructure({
         [TYPE_USER_ADMIN]: structure({
             'userId': Uleb128,
             'level': Uleb128,
-            'key': Key
+            'key': Key,
+            'timeStart': Uleb128,
+            'timeEnd': Uleb128
         }),
         [TYPE_USER_USER]: structure({
             'userId': Uleb128,
+            'level': Uleb128,
             'key': Key,
             'timeStart': Uleb128,
             'timeEnd': Uleb128
         }),
         [TYPE_USER_PUBLIC]: structure({
             'userId': Uleb128,
-            'key': Key
+            'key': Key,
+            'timeStart': Uleb128,
+            'timeEnd': Uleb128
         }),
     }
 }) {
@@ -87,19 +92,22 @@ export class InternalUser extends typedStructure({
         [TYPE_USER_ADMIN]: structure({
             'userId': Uleb128,
             'level': Uleb128,
-            'key': Key
+            'key': Key,
+            'timeStart': Uleb128,
+            'timeEnd': Uleb128
         }),
         [TYPE_USER_USER]: structure({
             'userId': Uleb128,
+            'level': Uleb128,
             'key': Key,
             'timeStart': Uleb128,
-            'timeEnd': Uleb128,
-            'level': Uleb128,
-            'endorsing': ArrayOfUleb128
+            'timeEnd': Uleb128
         }),
         [TYPE_USER_PUBLIC]: structure({
             'userId': Uleb128,
-            'key': Key
+            'key': Key,
+            'timeStart': Uleb128,
+            'timeEnd': Uleb128
         })
     }
 }) {}

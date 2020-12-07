@@ -2,6 +2,7 @@ import { TestAdminCommon } from "./AdminCommon";
 import { getUniqueUserId } from ".";
 import { createAdmin } from "@/factories/txn";
 import { Block } from "@/models/block";
+import Time from "@/services/Time";
 
 /******************************/
 
@@ -32,6 +33,7 @@ export class TestAdmin extends TestAdminCommon {
     ) {
         const txn = createAdmin({
             userId: admin.id(),
+            timeStart: Date.now() + 1e3,
             level: admin.level(),
             targetBlockIndex: signingBlock.getIndex(),
             publicKey: admin.publicKey(),

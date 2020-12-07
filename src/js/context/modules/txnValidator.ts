@@ -6,7 +6,7 @@ import {
     TYPE_TXN_SIGNATURE_ADMIN,
     TYPE_TXN_SIGNATURE_USER,
     TYPE_TXN_SIGNATURE_GROUP,
-    User, Blob, ArrayOfUleb128, ArrayOfBlob
+    User, Blob, ArrayOfUleb128, ArrayOfBlob, TYPE_USER_USER, TYPE_TXN_REPLACE_USERS
 } from "@/models/structure";
 import {
     ruleTxnOnlyEvenBlockIndex,
@@ -16,6 +16,7 @@ import {
 import { Block } from "@/models/block";
 import Time from "@/services/Time";
 import BufferWrapper from "@/libs/BufferWrapper";
+import { timeEnd } from "console";
 
 /******************************/
 
@@ -142,14 +143,27 @@ export default function moduleTxnValidator(ctx: unknown) {
                 }
 
                 const authorType = author.getValue('type', Uleb128);
-                const authorKey = author.get('key');
-                const txnHash = txn.getHash();
 
                 // typ autora
                 if (validAuthorUserTypes.indexOf(authorType) === -1) {
                     console.log('🔴', `Nieporawny typ autora {${authorType}}{${validAuthorUserTypes}}`, txn);
                     return null;
                 }
+
+                if (authorType === TYPE_USER_USER) {
+                    const buildBlockTime = block.getTime() + config.getDiscreteBlockPeriod() * 2;
+                    const authorTimeEnd = author.getValue('timeEnd', Uleb128);
+    
+                    // autor będzie nadal aktywny w czasie tworzenia bloku
+                    if (buildBlockTime > authorTimeEnd) {
+                        console.log('🔴', `Autor zostanie dezaktywowany przed utworzeniem bloku {${authorId}}`, txn);
+                        return null;
+                    }
+                }
+
+                const authorKey = author.get('key');
+                const txnHash = txn.getHash();
+
                 // weryfikacja podpisu
                 if (!authorKey.verify(txnHash, signature)) {
                     console.log('🔴', `Podpis niepoprawny {${authorId}}`, txn);
@@ -163,6 +177,7 @@ export default function moduleTxnValidator(ctx: unknown) {
                 const signatureList = txn.getValue('signatures', ArrayOfBlob);
                 const txnHash = txn.getHash();
                 const authors = [] as User[];
+                const timeEnd = txn.asType(TYPE_TXN_REPLACE_USERS).get('data').getValue('timeEnd');
                 
                 if (!signatureList.length) {
                     console.log('🔴', `Brak podpisów`, txn);
@@ -191,6 +206,14 @@ export default function moduleTxnValidator(ctx: unknown) {
                     }
 
                     const authorType = author.getValue('type', Uleb128);
+                    const authorTimeEnd = author.getValue('timeEnd', Uleb128);
+    
+                    // autor będzie nadal aktywny do czasu wygaśnięcia nowego użytkownika
+                    if (authorTimeEnd < timeEnd) {
+                        console.log('🔴', `Autor zostanie dezaktywowany w trakcie życia nowego konta {${authorId}}`, txn);
+                        return null;
+                    }    
+
                     const authorKey = author.get('key');
     
                     // typ autora

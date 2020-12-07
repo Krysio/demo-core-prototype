@@ -16,6 +16,7 @@ if (process.env.NODE_ENV === 'development') {
 
 /******************************/
 
+import BufferWrapper from "@/libs/BufferWrapper";
 import Node from '@/models/node';
 import { createGenesis } from "@/test";
 
@@ -50,7 +51,7 @@ node.context.events.once('node/topBlock/changed', async function () {
         await new Promise((r) => setTimeout(r, 1e2));
     }
 
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < 160; i++) {
         setTimeout(async () => {
             const user = root.createUser();
 
@@ -62,31 +63,36 @@ node.context.events.once('node/topBlock/changed', async function () {
             }
 
             root.insertUser(user);
+            const timeEnd = Date.now() + 1e3 * 60 * 5;
 
-            await new Promise((r) => setTimeout(r, Math.random() * 10e3));
+            await new Promise((r) => setTimeout(r, Math.random() * 1e3 + 5e3));
             
             activeUserList.push(user);
             user.startRandomBehaviors();
-        }, Math.random() * 10e3)
+
+            await new Promise((r) => setTimeout(r, timeEnd - Date.now() - 2e3));
+            user.stopRandomBehaviors();
+            activeUserList.splice(activeUserList.indexOf(user), 1);
+        }, Math.random() * 100e3)
     }
 
-    await new Promise((r) => setTimeout(r, 11e3));
-
-    console.log('Inserting users end');
+    await new Promise((r) => setTimeout(r, 16e3));
 
     (async function(){
         const testShuffle = (new TxnStandalone()).init().asType(TYPE_TXN_REPLACE_USERS);
         testShuffle.setValue('type', TYPE_TXN_REPLACE_USERS);
     
+        const userList = [...activeUserList];
         const protoUserList = [];
         const authorList = [];
-        const timeEnd = Date.now() + 10000;
+        const timeEnd = Date.now() + 60e3;
         const level = 1;
         const prevKeyMap = new Map();
 
-        for (let user of activeUserList) {
+        for (let user of userList) {
             const privateKey = user.privateKey();
 
+            user.stopRandomBehaviors();
             authorList.push(user.id());
 
             user.createNewIdentity(level, timeEnd);
@@ -101,6 +107,13 @@ node.context.events.once('node/topBlock/changed', async function () {
 
             protoUserList.push(protoUser);
         }
+
+        const shuffleArray = arr => arr
+            .map(a => [Math.random(), a])
+            .sort((a, b) => a[0] - b[0])
+            .map(a => a[1]);
+
+        shuffleArray(protoUserList);
     
         testShuffle
         .setValue('authors', authorList)
@@ -113,7 +126,7 @@ node.context.events.once('node/topBlock/changed', async function () {
         const hash = testShuffle.getHash();
         const signatureList = [];
 
-        for (let user of activeUserList) {
+        for (let user of userList) {
             const signature = $$.create('Signature')
                 .setValue(user.sign(hash, prevKeyMap.get(user.id())) as BufferWrapper)
 
@@ -122,8 +135,13 @@ node.context.events.once('node/topBlock/changed', async function () {
 
         testShuffle.setValue('signatures', signatureList);
 
-        console.log(testShuffle, testShuffle.toBuffer());
         node.takeTransaction(testShuffle);
+        
+        await new Promise((r) => setTimeout(r, Math.random() * 10e3));
+
+        for (let user of userList) {
+            user.startRandomBehaviors();
+        }
     })();
 
     //user3.txnInsertDocument(1, 'President candidate');
@@ -137,9 +155,8 @@ import $ from 'react-json-syntax';
 import rNode from "@/view/Node";
 import $$, { TxnStandalone, TYPE_KEY_Secp256k1, TYPE_TXN_REPLACE_USERS } from './models/structure';
 import { TestUser } from './test/User';
-import BufferWrapper from "@/libs/BufferWrapper";
 
-(function () {
+if (true) (function () {
     window.document.getElementById('loader').remove();
 
     // view;

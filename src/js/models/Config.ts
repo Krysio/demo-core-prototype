@@ -21,6 +21,7 @@ export class Config {
     protected discreteBlockTime: [number, DiscreteTimeUnit];
     protected discreteKeysTime: [number, DiscreteTimeUnit];
     protected configBlockFrequency: number;
+    protected adminDelay: number;
 
     constructor() { throw new Error('use Config.create({})'); }
 
@@ -28,12 +29,14 @@ export class Config {
         genesisTime?: Config['genesisTime'],
         discreteBlockTime?: Config['discreteBlockTime'],
         discreteKeysTime?: Config['discreteKeysTime'],
-        configBlockFrequency?: Config['configBlockFrequency']
+        configBlockFrequency?: Config['configBlockFrequency'],
+        adminDelay?: Config['adminDelay'],
     } = {}): Config {
         data.genesisTime = data.genesisTime || Time.now();
         data.configBlockFrequency = data.configBlockFrequency || 1024;
         data.discreteBlockTime = data.discreteBlockTime || [5, DiscreteTimeUnit.m];
         data.discreteKeysTime = data.discreteKeysTime || [365, DiscreteTimeUnit.d];
+        data.adminDelay = data.adminDelay || 24*60*60*1e3;
 
         Object.setPrototypeOf(data, Config.prototype);
 
@@ -55,8 +58,8 @@ export class Config {
     getConfigBlockFrequency() {
         return this.configBlockFrequency;
     }
-    getEdorsingLimit() {
-        return 8;
+    getAdminDelay() {
+        return this.adminDelay;
     }
 
     /******************************/

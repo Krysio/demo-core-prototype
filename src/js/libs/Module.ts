@@ -13,9 +13,24 @@ export function createModule<
 
   const module = {
     in(inputValue: T_in) {
-      const result: any = main(inputValue);
-      module.emit(result);
+      if (process.env.NODE_ENV === 'development') {
+        const t0 = performance.now();
+        const result: any = main(inputValue);
+        const t1 = performance.now();
+        module.emit(result);
+        events.emit('performance', t1 - t0);
+      } else {
+        const result: any = main(inputValue);
+        module.emit(result);
+      }
     },
+    ...(process.env.NODE_ENV === 'development' ? {
+      performance(
+        handler: (outputValue: T_out_unpromise) => void
+      ) {
+        events.on('performance', handler);
+      },
+    } : {}),
     out(
       handler: (outputValue: T_out_unpromise) => void
     ) {

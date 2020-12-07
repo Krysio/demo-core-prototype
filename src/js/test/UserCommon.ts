@@ -56,19 +56,6 @@ export class TestUserCommon extends TestBaseUser {
         return this.txnCommon(transaction);
     }
 
-    txnSetEndorsing(
-        user: TestUserCommon
-    ) {
-        const transaction = $$.create('TxnStandalone').asType($.TYPE_TXN_SET_ENDORSING);
-
-        transaction.setValue('version', 1);
-        transaction.setValue('type', $.TYPE_TXN_SET_ENDORSING);
-        transaction.get('data').get('userId').setValue(user.id());
-        transaction.get('data').get('slotIndex').setValue(user.id());
-
-        return this.txnCommon(transaction);
-    }
-
     txnBind(
         user: TestUserCommon
     ) {
@@ -132,14 +119,7 @@ export class TestUserCommon extends TestBaseUser {
                     this.txnBind(randomUser);
                 }
             } break;
-            case 1: {
-                // endorsing
-                const randomUser = this.userList()[Math.floor(Math.random() * this.userList().length)];
-
-                if (randomUser) {
-                    this.txnSetEndorsing(randomUser);
-                }
-            } break;
+            case 1:
             case 2:
             case 3:
             case 4: {

@@ -15,7 +15,6 @@ import {
     internalInitial,
     internalCreateUser, standaloneCreateUser,
     internalRemoveUser, standaloneRemoveUser,
-    internalEndoring, standaloneEndorsing,
     internalDocument, standaloneDocument,
     internalBind, standaloneBind,
     internalVote, standaloneVote,
@@ -31,7 +30,6 @@ export class TxnInternal extends typedStructure({
             ...internalInitial,
             ...internalCreateUser,
             ...internalRemoveUser,
-            ...internalEndoring,
             ...internalDocument,
             ...internalBind,
             ...internalVote,
@@ -81,7 +79,6 @@ export class TxnStandalone extends typedStructure({
     'type': {
         ...standaloneCreateUser,
         ...standaloneRemoveUser,
-        ...standaloneEndorsing,
         ...standaloneDocument,
         ...standaloneBind,
         ...standaloneVote,

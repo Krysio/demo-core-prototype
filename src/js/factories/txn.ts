@@ -18,20 +18,6 @@ export function createConfigForFastTest() {
         config
     };
 }
-export function createHashesForEmptyDb() {
-    const transaction = $$.create('TxnInternal')
-        .setValue('type', $.TYPE_TXN_HASH_LIST)
-        .set('data', $$.create('HashList')
-            .set('keys', $$.create('Hash')
-                .setValue('type', $.TYPE_HASH_Sha256)
-                .setValue('data', BufferWrapper.create(EMPTY_HASH))
-            )
-        );
-
-    return {
-        transaction
-    };
-}
 export function createRoot() {
     const [privateKey, publicKey] = secp256k1.getKeys();
     const transaction = $$.create('TxnInternal')
@@ -55,6 +41,7 @@ export function createAdmin(inputs: {
     publicKey?: Buffer,
     parentPrivateKey: Buffer,
     targetBlockIndex: number,
+    timeStart: number,
     level: number,
     userId: number
 }) {
@@ -78,6 +65,8 @@ export function createAdmin(inputs: {
             )
             .setValue('userId', inputs.userId)
             .setValue('level', inputs.level)
+            .setValue('timeStart', inputs.timeStart)
+            .setValue('timeEnd', 0)
     );
     transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
     transaction.setValue('author', inputs.parentId);
@@ -105,7 +94,8 @@ export function createUser(inputs: {
     targetBlockIndex: number,
     timeStart: number,
     timeEnd: number,
-    userId: number
+    userId: number,
+    level: number
 }) {
     let privateKey = null;
     let publicKey = inputs.publicKey;
@@ -128,6 +118,7 @@ export function createUser(inputs: {
             .setValue('userId', inputs.userId)
             .setValue('timeStart', inputs.timeStart)
             .setValue('timeEnd', inputs.timeEnd)
+            .setValue('level', inputs.level)
     );
     transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
     transaction.setValue('author', inputs.parentId);
@@ -153,6 +144,8 @@ export function createPublicUser(inputs: {
     publicKey?: Buffer,
     parentPrivateKey: Buffer,
     targetBlockIndex: number,
+    timeStart: number,
+    timeEnd: number,
     userId: number
 }) {
     let privateKey = null;
@@ -174,6 +167,8 @@ export function createPublicUser(inputs: {
                 .setValue('data', BufferWrapper.create(publicKey))
             )
             .setValue('userId', inputs.userId)
+            .setValue('timeStart', inputs.timeStart)
+            .setValue('timeEnd', inputs.timeEnd)
     );
     transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
     transaction.setValue('author', inputs.parentId);
@@ -205,7 +200,7 @@ export function removeUser(inputs: {
     transaction.setValue('version', 1);
     transaction.setValue('type', $.TYPE_TXN_REMOVE_USER);
     transaction.get('data').setValue('userId', inputs.userId);
-    transaction.get('data').setValue('reason', 0x00);
+    transaction.get('data').setValue('timeEnd', Date.now() + 5e3);
     transaction.setValue('signingBlockIndex', inputs.targetBlockIndex);
     transaction.setValue('author', inputs.parentId);
 

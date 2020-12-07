@@ -16,6 +16,7 @@ export default function moduleTxnParser(ctx: unknown) {
             return;
         }
 
+
         // TODO czy node jest zsynchronizowany
         txnBuffer.cursor = 0;
         const txn = Structure.create("TxnStandalone").fromBuffer(txnBuffer);

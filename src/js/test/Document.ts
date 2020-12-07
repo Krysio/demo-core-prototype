@@ -7,6 +7,7 @@ import BufferWrapper from "@/libs/BufferWrapper";
 export class TestDocument {
     protected $id: number = -1;
     protected $body: string = '';
+    protected $timeStart: number = -1;
     protected $timeEnd: number = -1;
 
     constructor(
@@ -31,6 +32,16 @@ export class TestDocument {
             return this;
         }
         return this.$body;
+    }
+
+    timeStart(): number;
+    timeStart(newValue: number): this;
+    timeStart(newValue?: number) {
+        if (newValue !== undefined) {
+            this.$timeStart = newValue;
+            return this;
+        }
+        return this.$timeStart;
     }
 
     timeEnd(): number;
@@ -64,6 +75,7 @@ export class TestDocument {
 
         document.setValue('documentId', this.id());
         document.setValue('timeEnd', this.timeEnd());
+        document.setValue('timeStart', this.timeStart());
         document.set('documentHash', fileHash.setHashFromString(this.body()));
         document.setValue('countOfCredits', 1);
         document.setValue('countOfOptions', 1);

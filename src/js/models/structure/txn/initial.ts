@@ -1,9 +1,7 @@
 import { structure } from "../base";
 import { Config } from "../../Config";
-import { Block } from "../../Block";
 import { User } from "../User";
 import { Blob } from "../Blob";
-import { HashList } from "../HashList";
 import { Context } from "@/context";
 import BufferWrapper from "@/libs/BufferWrapper";
 
@@ -35,14 +33,9 @@ class TxnSetConfig extends structure({
     }
 }
 
-class TxnDbHashList extends structure({
-    'data': HashList
-}) {}
-
 export const internalInitial = {
     [TYPE_TXN_INSERT_ROOT_USER]: TxnInsertRootUser,
-    [TYPE_TXN_SET_CONFIG]: TxnSetConfig,
-    [TYPE_TXN_HASH_LIST]: TxnDbHashList
+    [TYPE_TXN_SET_CONFIG]: TxnSetConfig
 };
 /******************************/
 

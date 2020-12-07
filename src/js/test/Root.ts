@@ -25,7 +25,8 @@ export class TestRoot extends TestAdminCommon {
             targetBlockIndex: this.node().getCurrentTopBlock().getIndex(),
             publicKey: admin.publicKey(),
             parentId: 0,
-            parentPrivateKey: this.privateKey()
+            parentPrivateKey: this.privateKey(),
+            timeStart: Date.now() + 4e3
         });
 
         this.node().takeTransaction(txn.transaction);
@@ -55,11 +56,13 @@ export class TestRoot extends TestAdminCommon {
             case 1: {
                 const uuid = UUID.v4();
                 const now = Date.now();
+                const timeStart = now + 4e3;
                 const timeEnd = now + 1e3 * 60 * 2;
                 const document = new TestDocument(this.node());
 
                 document.id(getUniqueDocumentId());
                 document.body(uuid);
+                document.timeStart(timeStart);
                 document.timeEnd(timeEnd);
                 document.txnInsert({
                     authorId: this.id(),

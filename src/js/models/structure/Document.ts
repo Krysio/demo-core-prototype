@@ -23,6 +23,7 @@ export const FILE_FORMAT_MARKDOWN = 1;
 
 export class Document extends structure({
     'documentId': Uleb128,
+    'timeStart': Uleb128,
     'timeEnd': Uleb128,
     'countOfOptions': Uleb128,
     'countOfCredits': Uleb128,

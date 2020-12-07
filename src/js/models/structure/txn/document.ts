@@ -71,5 +71,13 @@ function applyInsertDocument(
     context.module.documentInsert.in(document);
 }
 
+function applyInsertDocumentByAdmin(
+    this: TxnInternalInsertDocument,
+    context: Context
+) {
+    const document = this.get('data', Document);
+    context.module.documentInsert.in(document);
+}
+
 ruleTxnApply.set(TYPE_TXN_INSERT_DOCUMENT, applyInsertDocument);
-ruleTxnApply.set(TYPE_TXN_INSERT_DOCUMENT_BY_ADMIN, applyInsertDocument);
+ruleTxnApply.set(TYPE_TXN_INSERT_DOCUMENT_BY_ADMIN, applyInsertDocumentByAdmin);

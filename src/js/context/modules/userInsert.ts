@@ -26,7 +26,6 @@ export default function moduleUserInsert(ctx: unknown) {
                 
                 typedUser
                     .setValue('level', 0)
-                    .setValue('endorsing', [])
             } break;
         }
 

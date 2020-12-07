@@ -1,5 +1,5 @@
 import { Context } from "@/context";
-import $$, { TYPE_USER_USER, Uleb128 } from "@/models/structure";
+import $$, { TYPE_USER_ADMIN, TYPE_USER_PUBLIC, TYPE_USER_USER, Uleb128 } from "@/models/structure";
 import BufferWrapper from "@/libs/BufferWrapper";
 
 export default function(rawContext: unknown) {
@@ -19,24 +19,22 @@ export default function(rawContext: unknown) {
             const userType = user.getValue('type', Uleb128);
 
             switch (userType) {
-                case TYPE_USER_USER: {
+                case TYPE_USER_ADMIN: 
+                case TYPE_USER_USER: 
+                case TYPE_USER_PUBLIC: {
                     const typedUser = user.asType(TYPE_USER_USER);
 
                     if (Date.now() < typedUser.getValue('timeStart')) {
                         return null;
                     }
                     if (Date.now() >= typedUser.getValue('timeEnd')) {
+                        await context.store.user.del(userId);
                         return null;
                     }
                 } break;
             }
 
             return user;
-        },
-        async getUserEndorsingListById(
-            userId: number
-        ) {
-            return [];
         },
         storeUserWithId(
             userId: number,
