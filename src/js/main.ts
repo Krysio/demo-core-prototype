@@ -11,112 +11,152 @@ if (process.env.NODE_ENV === 'development') {
 
 /******************************/
 
-import * as dd from '@/models/test';
-console.log(dd);
+// import * as dd from '@/models/test';
+// console.log(dd);
+
+/******************************/
+
+import BufferWrapper from "@/libs/BufferWrapper";
+import Node from '@/models/node';
+import { createGenesis } from "@/test";
+
+const node = new Node();
+const root = createGenesis(node);
+
+Object.assign(global, {
+    dev_node: node
+});
+
+node.context.events.once('node/topBlock/changed', async function () {
+    const admin1 = root.createAdmin(1);
+    const admin2 = root.createAdmin(1);
+    const admin3 = root.createAdmin(2);
+    const admin4 = root.createAdmin(2);
+    const admin5 = root.createAdmin(2);
+
+    root.insertAdmin(admin1);
+    root.insertAdmin(admin2);
+    root.insertAdmin(admin3);
+    root.insertAdmin(admin4);
+    root.insertAdmin(admin5);
+    
+    const activeUserList = [] as TestUser[];
+    const activeDocumentList = [];
+
+    root.documentList(activeDocumentList);
+    root.startRandomBehaviors();
+
+    await new Promise((r) => setTimeout(r, 1e3));
+    while (node.getCurrentTopBlock().getIndex() % 2) {
+        await new Promise((r) => setTimeout(r, 1e2));
+    }
+
+    for (let i = 0; i < 160; i++) {
+        setTimeout(async () => {
+            const user = root.createUser();
+
+            user.userList(activeUserList);
+            user.documentList(activeDocumentList);
+
+            while (node.getCurrentTopBlock().getIndex() % 2) {
+                await new Promise((r) => setTimeout(r, 1e2));
+            }
+
+            root.insertUser(user);
+            const timeEnd = Date.now() + 1e3 * 60 * 5;
+
+            await new Promise((r) => setTimeout(r, Math.random() * 1e3 + 5e3));
+            
+            activeUserList.push(user);
+            user.startRandomBehaviors();
+
+            await new Promise((r) => setTimeout(r, timeEnd - Date.now() - 2e3));
+            user.stopRandomBehaviors();
+            activeUserList.splice(activeUserList.indexOf(user), 1);
+        }, Math.random() * 100e3)
+    }
+
+    await new Promise((r) => setTimeout(r, 16e3));
+
+    (async function(){
+        const testShuffle = (new TxnStandalone()).init().asType(TYPE_TXN_REPLACE_USERS);
+        testShuffle.setValue('type', TYPE_TXN_REPLACE_USERS);
+    
+        const userList = [...activeUserList];
+        const protoUserList = [];
+        const authorList = [];
+        const timeEnd = Date.now() + 60e3;
+        const level = 1;
+        const prevKeyMap = new Map();
+
+        for (let user of userList) {
+            const privateKey = user.privateKey();
+
+            user.stopRandomBehaviors();
+            authorList.push(user.id());
+
+            user.createNewIdentity(level, timeEnd);
+
+            prevKeyMap.set(user.id(), privateKey);
+
+            const protoUser = $$.create('ProtoShadowUser')
+                .setValue('userId', user.id());
+            protoUser.get('key')
+                .setValue('type', TYPE_KEY_Secp256k1)
+                .setValue('data', BufferWrapper.create(user.publicKey()))
+
+            protoUserList.push(protoUser);
+        }
+
+        const shuffleArray = arr => arr
+            .map(a => [Math.random(), a])
+            .sort((a, b) => a[0] - b[0])
+            .map(a => a[1]);
+
+        shuffleArray(protoUserList);
+    
+        testShuffle
+        .setValue('authors', authorList)
+        .setValue('signingBlockHash', node.getCurrentTopBlock().getHash())
+        .get('data')
+            .setValue('timeEnd', timeEnd)
+            .setValue('level', level)
+            .setValue('users', protoUserList);
+
+        const hash = testShuffle.getHash();
+        const signatureList = [];
+
+        for (let user of userList) {
+            const signature = $$.create('Signature')
+                .setValue(user.sign(hash, prevKeyMap.get(user.id())) as BufferWrapper)
+
+            signatureList.push(signature);
+        }
+
+        testShuffle.setValue('signatures', signatureList);
+
+        node.takeTransaction(testShuffle);
+        
+        await new Promise((r) => setTimeout(r, Math.random() * 10e3));
+
+        for (let user of userList) {
+            user.startRandomBehaviors();
+        }
+    })();
+
+    //user3.txnInsertDocument(1, 'President candidate');
+});
+
+//#region React
 
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
-import $, { JsonNode } from 'react-json-syntax';
-
-/******************************/
-
-import Node from '@/models/node';
-import { createGenesisiForFastTest } from '@/factories/block';
-import {
-    createAdmin, createUser, createPublicUser,
-    removeUser
-} from '@/factories/txn';
-import { User, TYPE_USER_ROOT } from '@/models/user';
-
-
-const node = new Node();
-const genesis = createGenesisiForFastTest();
-const user = User.create(TYPE_USER_ROOT);
-
-user.setKey(genesis.rootKey.publicKey);
-console.log(
-    node, genesis,
-    user, User.fromBuffer(user.toBuffer())
-);
-node.takeBlock(genesis.blockGenesis);
-
-(async function(){
-    await node.context.sync();
-
-    let topBlock = node.getCurrentTopBlock();
-
-    const txnCreateAdmin1 = createAdmin({
-        userId: 1,
-        level: 1,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey
-    });
-
-    const txnCreateAdmin2 = createAdmin({
-        userId: 2,
-        level: 1,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey
-    });
-    const txnCreateUser1 = createUser({
-        userId: 100,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey,
-        timeEnd: Date.now() + 1e3 * 60 * 5,
-        timeStart: Date.now()
-    });
-    const txnCreateUser2 = createUser({
-        userId: 101,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey,
-        timeEnd: Date.now() + 1e3 * 60 * 5,
-        timeStart: Date.now()
-    });
-    const txnCreatePublicUser1 = createPublicUser({
-        userId: 200,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey
-    });
-
-    node.takeTransaction(txnCreateAdmin1.txn);
-    node.takeTransaction(txnCreateAdmin2.txn);
-    node.takeTransaction(txnCreateUser1.txn);
-    node.takeTransaction(txnCreateUser2.txn);
-    node.takeTransaction(txnCreatePublicUser1.txn);
-
-    await new Promise((r) => setTimeout(r, 5e3));
-
-    topBlock = node.getCurrentTopBlock();
-
-    const txnCreateUser3 = createUser({
-        userId: 102,
-        targetBlockIndex: topBlock.getIndex(),
-        parentId: txnCreateAdmin1.id,
-        parentPrivateKey: txnCreateAdmin1.privateKey,
-        timeEnd: Date.now() + 1e3 * 60 * 5,
-        timeStart: Date.now()
-    });
-    const txnRemoveUser = removeUser({
-        userId: 2,
-        parentId: 0,
-        parentPrivateKey: genesis.rootKey.privateKey,
-        targetBlockIndex: topBlock.getIndex()
-    });
-
-    node.takeTransaction(txnCreateUser3.txn);
-    node.takeTransaction(txnRemoveUser.txn);
-})();
-
-/******************************/
-
+import $ from 'react-json-syntax';
 import rNode from "@/view/Node";
+import $$, { TxnStandalone, TYPE_KEY_Secp256k1, TYPE_TXN_REPLACE_USERS } from './models/structure';
+import { TestUser } from './test/User';
 
-(function(){
+if (true) (function () {
     window.document.getElementById('loader').remove();
 
     // view;
@@ -128,4 +168,6 @@ import rNode from "@/view/Node";
     );
 })();
 
-/******************************/
+//#endregion
+
+//*/

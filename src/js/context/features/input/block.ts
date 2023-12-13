@@ -8,6 +8,10 @@ export default function (rawContext: unknown) {
 
     context.events.on("input/block", (block: Block) => {
         if (block.verify()) {
+            if (context.hasTopBlock() === false) {
+                context.module.blockSetTop.in(block);
+            }
+
             context.events.emit('node/block/verify/accept', block);
         } else {
             context.events.emit('node/block/verify/reject', block);

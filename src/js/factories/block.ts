@@ -1,32 +1,22 @@
-import { Block } from "@/models/block";
+import { Block } from "@/models/Block";
 import * as txnFactory from "@/factories/txn";
 import Time from '@/services/Time';
 
 /******************************/
 
 export function createGenesisiForFastTest() {
-    const { config, txn: txnConfig, transaction: test2 } = txnFactory.createConfigForFastTest();
-    const { publicKey, privateKey, txn: txnRootKey, transaction: test1 } = txnFactory.createRoot();
-    const { txn: txnDbHashList, transaction: test3 } = txnFactory.createHashesForEmptyDb();
+    const { config, transaction: txnConfig } = txnFactory.createConfigForFastTest();
+    const { publicKey, privateKey, transaction: txnRootKey } = txnFactory.createRoot();
 
-    const blockGenesis = Block.create({
-        time: Time.now(),
-        index: 0
-    });
+    const blockGenesis = Block.create() as Block;
 
-
-    console.log(
-        txnRootKey.toBuffer().toString('hex'),
-        test1.toBuffer().toString('hex'),
-        txnConfig.toBuffer().toString('hex'),
-        test2.toBuffer().toString('hex'),
-        txnDbHashList.toBuffer().toString('hex'),
-        test3.toBuffer().toString('hex'),
-    );
+    blockGenesis
+        .setValue('version', 0x01)
+        .setValue('index', 0x00)
+        .setValue('time', Time.now());
 
     blockGenesis.insertTransaction(txnRootKey.toBuffer());
     blockGenesis.insertTransaction(txnConfig.toBuffer());
-    blockGenesis.insertTransaction(txnDbHashList.toBuffer());
 
     return {
         blockGenesis,
@@ -34,8 +24,7 @@ export function createGenesisiForFastTest() {
         rootKey: { privateKey, publicKey },
         txn: {
             insertRootKey: txnRootKey,
-            config: txnConfig,
-            dbHashList: txnDbHashList
+            config: txnConfig
         }
     };
 }

@@ -1,41 +1,39 @@
 import BufferWrapper from "@/libs/BufferWrapper";
-import { Base, BaseStructure, defineTypes, Uleb128 } from "@/models/structure";
+import * as sha256 from "@/services/crypto/sha256";
+import { structure, typedStructure } from "./base";
+import { Blob } from "./Blob";
 
 /******************************/
 
 export const TYPE_HASH_Sha256 = 0;
+export const EMPTY_BLOCK_HASH = BufferWrapper.alloc(32).fill(0) as BufferWrapper;
 
 /******************************/
 
-export class Hash extends BaseStructure {
-    protected schema = {
-        'type': defineTypes({
-            [TYPE_HASH_Sha256]: class HashSha256 extends Hash {
-                protected schema = {
-                    'data': Sha256
-                };
-            }
-        })
-    };
-}
-
-export class Sha256 extends Base {
-    protected value: BufferWrapper;
-
-    toBuffer() {
-        return this.value;
-    }
-
-    readBuffer() {
-        this.$cursorStart = this.buffer.cursor;
-        this.value = this.buffer.read(32);
-        this.$cursorEnd = this.buffer.cursor;
-        return this;
-    }
+export class Sha256 extends Blob {
+    protected value: BufferWrapper = EMPTY_BLOCK_HASH;
+    protected blobSize = 32;
 
     isValid() {
         return this.value.length === 32;
     }
 }
+
+export const Hash = typedStructure({
+    'type': {
+        [TYPE_HASH_Sha256]: class HashSha256 extends structure({
+            'data': Sha256
+        }) {
+            setHashFromString(value: string) {
+                const hash = new sha256.HashSum();
+
+                hash.push(Buffer.from(value, 'utf8'));
+                this.setValue('data', BufferWrapper.create(hash.get()));
+
+                return this;
+            }
+        }
+    }
+});
 
 export { Sha256 as BlockHash }

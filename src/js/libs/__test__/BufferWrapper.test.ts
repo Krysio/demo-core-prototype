@@ -1,6 +1,5 @@
 import BufferWrapper from "../BufferWrapper";
-import old from "../uleb128";
-import { randomData } from "@/nodeCore/__test__/helper";
+import { randomData } from "@/__test__/helper";
 
 it('uleb128', () => {
     for (let value of [607]) {

@@ -1,7 +1,8 @@
 import createContext, { Context } from "@/context";
 import LazyPromise from "@/libs/LazyPromise";
 import { Block } from "@/models/block";
-import { TxnAny, Txn } from "@/models/transaction";
+import $$, { TxnStandalone } from "@/models/structure";
+import BufferWrapper from "@/libs/BufferWrapper";
 
 /******************************/
 
@@ -39,14 +40,14 @@ export default class Node {
     }
 
     async takeTransaction(
-        inputBlock: TxnAny | Buffer
+        inputBlock: TxnStandalone | Buffer
     ) {
         await this.promiseReady.get();
 
-        let txn: TxnAny;
+        let txn: TxnStandalone;
 
         if (inputBlock instanceof Buffer) {
-            txn = Txn.fromBuffer(inputBlock);
+            txn = $$.create('TxnStandalone').fromBuffer(BufferWrapper.create(inputBlock).seek(0));
         } else {
             txn = inputBlock;
         }

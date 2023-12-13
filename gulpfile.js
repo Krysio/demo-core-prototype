@@ -5,7 +5,6 @@
 const fs = require('fs');
 const path = require('path');
 const gulp = require('gulp');
-const sass = require('gulp-sass');
 const sourcemaps = require('gulp-sourcemaps');
 const browserSync = require('browser-sync');
 const webpack = require('webpack');
@@ -56,8 +55,10 @@ function taskHtml() {
 }
 
 // SASS
-
+let sass = null;
 function taskSass() {
+    sass = sass || require('gulp-sass');
+    
     return gulp.src('src/sass/*.scss')
         .pipe(sourcemaps.init())
         .pipe(sass.sync().on('error', sass.logError))
@@ -189,11 +190,35 @@ let developTask = gulp.series(
     }
 );
 
+const serveTask = gulp.series(() => {
+    let bs = browserSync.create();
+
+    bs.init({
+        server: {
+            baseDir: `${ DIR_BUILD }/static/${ ENV }`,
+            index: 'index.html',
+            middleware: [
+                historyFallback()
+            ]
+        },
+        //@ts-ignore
+        serveStatic: [
+            `${ DIR_BUILD }/static/${ ENV }`,
+            `${ DIR_BUILD }/static/common`,
+            // {
+            //     route: '/data',
+            //     dir: config['DIR_DATA']
+            // }
+        ]
+    });
+});
+
 Object.assign(exports, {
     default: mainTask,
     html: taskHtml,
     sass: taskSass,
     js: taskJs,
     watch: taskWatch,
-    develop: developTask
+    develop: developTask,
+    serve: serveTask
 });

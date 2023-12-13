@@ -1,0 +1,6 @@
+# wymagania
+środowisko Node.js
+# instalacja
+npm i
+# uruchomienie przykładu
+npx gulp develop
